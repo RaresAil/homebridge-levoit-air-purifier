@@ -1,9 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
-import { Logger } from 'homebridge';
 import AsyncLock from 'async-lock';
 import crypto from 'crypto';
 
+import deviceTypes from './deviceTypes';
 import VeSyncFan from './VeSyncFan';
+import Platform from '../platform';
 
 export enum BypassMethod {
   STATUS = 'getPurifierStatus',
@@ -24,9 +25,8 @@ export default class VeSync {
   private accountId?: string;
   private token?: string;
 
-  private readonly VERSION = '1.0.2';
+  private readonly VERSION = '1.1.0';
   private readonly AGENT = `VeSync/VeSync 3.0.51(F5321;HomeBridge-VeSync ${this.VERSION})`;
-  private readonly DEVICE_TYPES = ['Core200S', 'Core300S', 'Core400S'];
   private readonly TIMEZONE = 'America/New_York';
   private readonly OS = 'HomeBridge-VeSync';
   private readonly LANG = 'en';
@@ -39,7 +39,7 @@ export default class VeSync {
   constructor(
     private readonly email: string,
     private readonly password: string,
-    public readonly log: Logger
+    public readonly platform: Platform
   ) {}
 
   private generateDetailBody() {
@@ -91,15 +91,39 @@ export default class VeSync {
         throw new Error('The user is not logged in!');
       }
 
+      this.platform.debugger.debug(
+        '[SEND COMMAND]',
+        `Sending command ${method} to ${fan.name}`,
+        `with (${JSON.stringify(body)})...`
+      );
+
       const response = await this.api.put('cloud/v2/deviceManaged/bypassV2', {
         ...this.generateV2Body(fan, method, body),
         ...this.generateDetailBody(),
         ...this.generateBody(true)
       });
 
+      if (!response?.data) {
+        this.platform.debugger.debug(
+          '[SEND COMMAND]',
+          'No response data!! JSON:',
+          JSON.stringify(response)
+        );
+      }
+
+      const isSuccess = response?.data?.code === 0;
+      if (!isSuccess) {
+        this.platform.debugger.debug(
+          '[SEND COMMAND]',
+          `Failed to send command ${method} to ${fan.name}`,
+          `with (${JSON.stringify(body)})!`,
+          `Response: ${JSON.stringify(response)}`
+        );
+      }
+
       await delay(500);
 
-      return response.data.code === 0;
+      return isSuccess;
     });
   }
 
@@ -109,11 +133,24 @@ export default class VeSync {
         throw new Error('The user is not logged in!');
       }
 
+      this.platform.debugger.debug(
+        '[GET DEVICE INFO]',
+        'Getting device info...'
+      );
+
       const response = await this.api.post('cloud/v2/deviceManaged/bypassV2', {
         ...this.generateV2Body(fan, BypassMethod.STATUS),
         ...this.generateDetailBody(),
         ...this.generateBody(true)
       });
+
+      if (!response?.data) {
+        this.platform.debugger.debug(
+          '[GET DEVICE INFO]',
+          'No response data!! JSON:',
+          JSON.stringify(response)
+        );
+      }
 
       await delay(500);
 
@@ -121,9 +158,11 @@ export default class VeSync {
     });
   }
 
-  public async startSession() {
-    await this.login();
+  public async startSession(): Promise<boolean> {
+    this.platform.debugger.debug('[START SESSION]', 'Starting auth session...');
+    const firstLoginSuccess = await this.login();
     setInterval(this.login.bind(this), 1000 * 60 * 55);
+    return firstLoginSuccess;
   }
 
   private async login(): Promise<boolean> {
@@ -131,6 +170,8 @@ export default class VeSync {
       if (!this.email || !this.password) {
         throw new Error('Email and password are required');
       }
+
+      this.platform.debugger.debug('[LOGIN]', 'Logging in...');
 
       const pwdHashed = crypto
         .createHash('md5')
@@ -155,6 +196,11 @@ export default class VeSync {
       );
 
       if (!response?.data) {
+        this.platform.debugger.debug(
+          '[LOGIN]',
+          'No response data!! JSON:',
+          JSON.stringify(response)
+        );
         return false;
       }
 
@@ -162,8 +208,15 @@ export default class VeSync {
       const { token, accountID } = result ?? {};
 
       if (!token || !accountID) {
+        this.platform.debugger.debug(
+          '[LOGIN]',
+          'The authentication failed!! JSON:',
+          JSON.stringify(response.data)
+        );
         return false;
       }
+
+      this.platform.debugger.debug('[LOGIN]', 'The authentication success');
 
       this.accountId = accountID;
       this.token = token;
@@ -182,7 +235,6 @@ export default class VeSync {
       });
 
       await delay(500);
-
       return true;
     });
   }
@@ -201,11 +253,40 @@ export default class VeSync {
         ...this.generateBody(true)
       });
 
-      const { result } = response.data;
-      const { list } = result ?? { list: [] };
+      if (!response?.data) {
+        this.platform.debugger.debug(
+          '[GET DEVICES]',
+          'No response data!! JSON:',
+          JSON.stringify(response)
+        );
+
+        return [];
+      }
+
+      if (!Array.isArray(response.data?.result?.list)) {
+        this.platform.debugger.debug(
+          '[GET DEVICES]',
+          'No list found!! JSON:',
+          JSON.stringify(response.data)
+        );
+
+        return [];
+      }
+
+      const { list } = response.data.result ?? { list: [] };
+
+      this.platform.debugger.debug(
+        '[GET DEVICES]',
+        'Device List -> JSON:',
+        JSON.stringify(list)
+      );
 
       const devices = list
-        .filter(({ deviceType }) => this.DEVICE_TYPES.includes(deviceType))
+        .filter(
+          ({ deviceType, type }) =>
+            !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+            type === 'wifi-air'
+        )
         .map(VeSyncFan.fromResponse(this));
 
       await delay(500);

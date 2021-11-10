@@ -13,14 +13,22 @@ const characteristic: {
   set: CharacteristicSetHandler;
 } & AccessoryThisType = {
   get: async function (): Promise<Nullable<CharacteristicValue>> {
-    await this.device.updateInfo();
-
     const { MANUAL, AUTO } =
       this.platform.Characteristic.TargetAirPurifierState;
+
+    if (!this.device.deviceType.hasAutoMode) {
+      return MANUAL;
+    }
+
+    await this.device.updateInfo();
 
     return this.device.mode === Mode.Auto ? AUTO : MANUAL;
   },
   set: async function (value: CharacteristicValue) {
+    if (!this.device.deviceType.hasAutoMode) {
+      return;
+    }
+
     const { MANUAL, AUTO } =
       this.platform.Characteristic.TargetAirPurifierState;
 
