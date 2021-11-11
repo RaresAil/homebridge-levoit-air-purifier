@@ -6,7 +6,7 @@ import {
 } from 'homebridge';
 import VeSyncFan, { Mode } from '../api/VeSyncFan';
 
-import { AccessoryThisType } from '../VeSyncAccessory.ts';
+import { AccessoryThisType } from '../VeSyncAccessory';
 
 const calculateSpeed = (device: VeSyncFan) => {
   let speed = (device.speed + 1) * device.deviceType.speedMinStep;

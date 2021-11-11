@@ -1,10 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
+import { Logger } from 'homebridge';
 import AsyncLock from 'async-lock';
 import crypto from 'crypto';
 
 import deviceTypes from './deviceTypes';
+import DebugMode from '../debugMode';
 import VeSyncFan from './VeSyncFan';
-import Platform from '../platform';
 
 export enum BypassMethod {
   STATUS = 'getPurifierStatus',
@@ -39,7 +40,8 @@ export default class VeSync {
   constructor(
     private readonly email: string,
     private readonly password: string,
-    public readonly platform: Platform
+    public readonly debugMode: DebugMode,
+    public readonly log: Logger
   ) {}
 
   private generateDetailBody() {
@@ -91,7 +93,7 @@ export default class VeSync {
         throw new Error('The user is not logged in!');
       }
 
-      this.platform.debugger.debug(
+      this.debugMode.debug(
         '[SEND COMMAND]',
         `Sending command ${method} to ${fan.name}`,
         `with (${JSON.stringify(body)})...`
@@ -104,7 +106,7 @@ export default class VeSync {
       });
 
       if (!response?.data) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[SEND COMMAND]',
           'No response data!! JSON:',
           JSON.stringify(response)
@@ -113,7 +115,7 @@ export default class VeSync {
 
       const isSuccess = response?.data?.code === 0;
       if (!isSuccess) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[SEND COMMAND]',
           `Failed to send command ${method} to ${fan.name}`,
           `with (${JSON.stringify(body)})!`,
@@ -133,10 +135,7 @@ export default class VeSync {
         throw new Error('The user is not logged in!');
       }
 
-      this.platform.debugger.debug(
-        '[GET DEVICE INFO]',
-        'Getting device info...'
-      );
+      this.debugMode.debug('[GET DEVICE INFO]', 'Getting device info...');
 
       const response = await this.api.post('cloud/v2/deviceManaged/bypassV2', {
         ...this.generateV2Body(fan, BypassMethod.STATUS),
@@ -145,7 +144,7 @@ export default class VeSync {
       });
 
       if (!response?.data) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[GET DEVICE INFO]',
           'No response data!! JSON:',
           JSON.stringify(response)
@@ -159,7 +158,7 @@ export default class VeSync {
   }
 
   public async startSession(): Promise<boolean> {
-    this.platform.debugger.debug('[START SESSION]', 'Starting auth session...');
+    this.debugMode.debug('[START SESSION]', 'Starting auth session...');
     const firstLoginSuccess = await this.login();
     setInterval(this.login.bind(this), 1000 * 60 * 55);
     return firstLoginSuccess;
@@ -171,7 +170,7 @@ export default class VeSync {
         throw new Error('Email and password are required');
       }
 
-      this.platform.debugger.debug('[LOGIN]', 'Logging in...');
+      this.debugMode.debug('[LOGIN]', 'Logging in...');
 
       const pwdHashed = crypto
         .createHash('md5')
@@ -196,7 +195,7 @@ export default class VeSync {
       );
 
       if (!response?.data) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[LOGIN]',
           'No response data!! JSON:',
           JSON.stringify(response)
@@ -208,7 +207,7 @@ export default class VeSync {
       const { token, accountID } = result ?? {};
 
       if (!token || !accountID) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[LOGIN]',
           'The authentication failed!! JSON:',
           JSON.stringify(response.data)
@@ -216,7 +215,7 @@ export default class VeSync {
         return false;
       }
 
-      this.platform.debugger.debug('[LOGIN]', 'The authentication success');
+      this.debugMode.debug('[LOGIN]', 'The authentication success');
 
       this.accountId = accountID;
       this.token = token;
@@ -254,7 +253,7 @@ export default class VeSync {
       });
 
       if (!response?.data) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[GET DEVICES]',
           'No response data!! JSON:',
           JSON.stringify(response)
@@ -264,7 +263,7 @@ export default class VeSync {
       }
 
       if (!Array.isArray(response.data?.result?.list)) {
-        this.platform.debugger.debug(
+        this.debugMode.debug(
           '[GET DEVICES]',
           'No list found!! JSON:',
           JSON.stringify(response.data)
@@ -275,7 +274,7 @@ export default class VeSync {
 
       const { list } = response.data.result ?? { list: [] };
 
-      this.platform.debugger.debug(
+      this.debugMode.debug(
         '[GET DEVICES]',
         'Device List -> JSON:',
         JSON.stringify(list)

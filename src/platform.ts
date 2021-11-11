@@ -9,7 +9,7 @@ import {
 } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import VeSyncAccessory from './VeSyncAccessory.ts';
+import VeSyncAccessory from './VeSyncAccessory';
 import VeSyncFan from './api/VeSyncFan';
 import DebugMode from './debugMode';
 import VeSync from './api/VeSync';
@@ -42,7 +42,7 @@ export default class Platform implements DynamicPlatformPlugin {
     this.debugger = new DebugMode(!!enableDebugMode, this.log);
     this.debugger.debug('[PLATFORM]', 'Debug mode enabled');
 
-    this.client = new VeSync(email, password, this);
+    this.client = new VeSync(email, password, this.debugger, log);
 
     this.api.on('didFinishLaunching', () => {
       this.discoverDevices();

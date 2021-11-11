@@ -158,7 +158,7 @@ export default class VeSyncFan {
         this._speed = result.level;
         this._mode = result.mode;
       } catch (err: any) {
-        this.client.platform.log.error(err?.message);
+        this.client.log.error(err?.message);
       }
     });
   }
