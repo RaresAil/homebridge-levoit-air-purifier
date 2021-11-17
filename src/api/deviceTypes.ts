@@ -2,6 +2,7 @@ export enum DeviceName {
   Core400SPro = '401S',
   Core400S = '400S',
   Core300S = '300S',
+  Core201S = '201S',
   Core200S = '200S'
 }
 
@@ -28,7 +29,9 @@ const deviceTypes: DeviceType[] = [
     speedLevels: 4
   },
   {
-    isValid: (input: string) => input.includes(DeviceName.Core200S),
+    isValid: (input: string) =>
+      input.includes(DeviceName.Core201S) ||
+      input.includes(DeviceName.Core200S),
     hasAutoMode: false,
     speedMinStep: 25,
     speedLevels: 4
