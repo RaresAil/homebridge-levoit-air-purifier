@@ -30,7 +30,7 @@ export default class Platform implements DynamicPlatformPlugin {
   public readonly registeredDevices: VeSyncAccessory[] = [];
 
   public readonly debugger: DebugMode;
-  private readonly client: VeSync;
+  private readonly client?: VeSync;
 
   constructor(
     public readonly log: Logger,
@@ -38,15 +38,25 @@ export default class Platform implements DynamicPlatformPlugin {
     public readonly api: API
   ) {
     const { email, password, enableDebugMode } = this.config ?? {};
-
     this.debugger = new DebugMode(!!enableDebugMode, this.log);
-    this.debugger.debug('[PLATFORM]', 'Debug mode enabled');
 
-    this.client = new VeSync(email, password, this.debugger, log);
+    try {
+      if (!email || !password) {
+        this.log.info('Setup the configuration first!');
+        this.cleanAccessories();
+        return;
+      }
 
-    this.api.on('didFinishLaunching', () => {
-      this.discoverDevices();
-    });
+      this.debugger.debug('[PLATFORM]', 'Debug mode enabled');
+
+      this.client = new VeSync(email, password, this.debugger, log);
+
+      this.api.on('didFinishLaunching', () => {
+        this.discoverDevices();
+      });
+    } catch (error: any) {
+      this.log.error(`Error: ${error?.message}`);
+    }
   }
 
   configureAccessory(accessory: VeSyncPlatformAccessory) {
@@ -54,33 +64,47 @@ export default class Platform implements DynamicPlatformPlugin {
     this.cachedAccessories.push(accessory);
   }
 
-  async discoverDevices() {
-    const { email, password } = this.config ?? {};
-    if (!email || !password) {
+  private cleanAccessories() {
+    try {
       if (this.cachedAccessories.length > 0) {
         this.debugger.debug(
           '[PLATFORM]',
           'Removing cached accessories because the email and password are not set (Count:',
           `${this.cachedAccessories.length})`
         );
+
         this.api.unregisterPlatformAccessories(
           PLUGIN_NAME,
           PLATFORM_NAME,
           this.cachedAccessories
         );
       }
-
-      return;
+    } catch (error: any) {
+      this.log.error(`Error for cached accessories: ${error?.message}`);
     }
+  }
 
-    this.log.info('Connecting to the servers...');
-    await this.client.startSession();
-    this.log.info('Discovering devices...');
+  private async discoverDevices() {
+    try {
+      if (!this.client) {
+        return;
+      }
 
-    const devices = await this.client.getDevices();
-    await Promise.all(devices.map(this.loadDevice.bind(this)));
+      this.log.info('Connecting to the servers...');
+      const successLogin = await this.client.startSession();
+      if (!successLogin) {
+        return;
+      }
 
-    this.checkOldDevices();
+      this.log.info('Discovering devices...');
+
+      const devices = await this.client.getDevices();
+      await Promise.all(devices.map(this.loadDevice.bind(this)));
+
+      this.checkOldDevices();
+    } catch (error: any) {
+      this.log.error(`Error: ${error?.message}`);
+    }
   }
 
   private async loadDevice(device: VeSyncFan) {
@@ -126,7 +150,7 @@ export default class Platform implements DynamicPlatformPlugin {
       ]);
     } catch (error: any) {
       this.log.error(
-        `Error for device: ${device.name}:${device.uuid} | ${error.message}`
+        `Error for device: ${device.name}:${device.uuid} | ${error?.message}`
       );
       return null;
     }
@@ -134,15 +158,21 @@ export default class Platform implements DynamicPlatformPlugin {
 
   private checkOldDevices() {
     this.cachedAccessories.map((accessory) => {
-      const exists = this.registeredDevices.find(
-        (device) => device.UUID === accessory.UUID
-      );
+      try {
+        const exists = this.registeredDevices.find(
+          (device) => device.UUID === accessory.UUID
+        );
 
-      if (!exists) {
-        this.log.info('Remove cached accessory:', accessory.displayName);
-        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-          accessory
-        ]);
+        if (!exists) {
+          this.log.info('Remove cached accessory:', accessory.displayName);
+          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+            accessory
+          ]);
+        }
+      } catch (error: any) {
+        this.log.error(
+          `Error for device: ${accessory.displayName} | ${error?.message}`
+        );
       }
     });
   }
