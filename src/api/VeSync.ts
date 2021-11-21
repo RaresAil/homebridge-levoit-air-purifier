@@ -308,9 +308,10 @@ export default class VeSync {
 
         const devices = list
           .filter(
-            ({ deviceType, type }) =>
+            ({ deviceType, type, extension }) =>
               !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
-              type === 'wifi-air'
+              type === 'wifi-air' &&
+              extension !== null //The humidifier Dual200S shows as a wifi-air but extension is null, so exclude it
           )
           .map(VeSyncFan.fromResponse(this));
 
