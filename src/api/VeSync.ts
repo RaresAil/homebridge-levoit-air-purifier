@@ -26,7 +26,7 @@ export default class VeSync {
   private accountId?: string;
   private token?: string;
 
-  private readonly VERSION = '1.1.1';
+  private readonly VERSION = '1.1.2';
   private readonly AGENT = `VeSync/VeSync 3.0.51(F5321;HomeBridge-VeSync ${this.VERSION})`;
   private readonly TIMEZONE = 'America/New_York';
   private readonly OS = 'HomeBridge-VeSync';
@@ -308,9 +308,10 @@ export default class VeSync {
 
         const devices = list
           .filter(
-            ({ deviceType, type }) =>
+            ({ deviceType, type, extension }) =>
               !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
-              type === 'wifi-air'
+              type === 'wifi-air' &&
+              !!extension?.mode
           )
           .map(VeSyncFan.fromResponse(this));
 
