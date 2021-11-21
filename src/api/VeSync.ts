@@ -311,7 +311,7 @@ export default class VeSync {
             ({ deviceType, type, extension }) =>
               !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
               type === 'wifi-air' &&
-              !!extension?.mode
+              !!extension?.fanSpeedLevel
           )
           .map(VeSyncFan.fromResponse(this));
 
