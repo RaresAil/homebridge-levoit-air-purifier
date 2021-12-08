@@ -50,6 +50,10 @@ export default class VeSyncFan {
     return this._isOn;
   }
   public get pm25() {
+    if (!this.deviceType.hasPM25) {
+      return 0;
+    }
+
     const value = this._pm25;
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
@@ -149,9 +153,9 @@ export default class VeSyncFan {
 
         const result = data?.result?.result;
 
+        this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
         this._airQualityLevel = result.air_quality;
         this._filterLife = result.filter_life;
-        this._pm25 = result.air_quality_value;
         this._screenVisible = result.display;
         this._childLock = result.child_lock;
         this._isOn = result.enabled;

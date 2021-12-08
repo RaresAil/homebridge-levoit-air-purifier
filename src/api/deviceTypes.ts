@@ -9,8 +9,9 @@ export enum DeviceName {
 export interface DeviceType {
   isValid: (input: string) => boolean;
   hasAutoMode: boolean;
-  speedLevels: number; // With night mode
   speedMinStep: number;
+  speedLevels: number; // With night mode
+  hasPM25: boolean;
 }
 
 const deviceTypes: DeviceType[] = [
@@ -20,13 +21,15 @@ const deviceTypes: DeviceType[] = [
       input.includes(DeviceName.Core400S),
     hasAutoMode: true,
     speedMinStep: 20,
-    speedLevels: 5
+    speedLevels: 5,
+    hasPM25: true
   },
   {
     isValid: (input: string) => input.includes(DeviceName.Core300S),
     hasAutoMode: true,
     speedMinStep: 25,
-    speedLevels: 4
+    speedLevels: 4,
+    hasPM25: true
   },
   {
     isValid: (input: string) =>
@@ -34,7 +37,8 @@ const deviceTypes: DeviceType[] = [
       input.includes(DeviceName.Core200S),
     hasAutoMode: false,
     speedMinStep: 25,
-    speedLevels: 4
+    speedLevels: 4,
+    hasPM25: false
   }
 ];
 
