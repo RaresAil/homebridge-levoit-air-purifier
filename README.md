@@ -5,17 +5,18 @@
 
 This is a Homebridge plugin to control Levoit Air Purifiers with via the VeSync Platform.
 
-| Supported Versions | Tested                           |
-| ------------------ | -------------------------------- |
-| Core 300S          | ✅                               |
-| Core 400S          | ✅                               |
-| Core 400S Pro      | ✅                               |
-| Core 200S          | ❔ (Untested but it should work) |
+| Supported Versions | Tested |
+| ------------------ | ------ |
+| Core 400S Pro      | ✅     |
+| Core 400S          | ✅     |
+| Core 300S          | ✅     |
+| Core 200S          | ✅     |
+| Other versions     | ❌     |
 
-**If you have the version 400S or 200S and you have issues,
-please open a issue and if it can be fixed without owning one
-of those models i will fix it, if not i will omit the specified
-model from the plugin.**
+**The versions lower then 200 are not supported (e.g. 131S) because they require API v1 and this plugin uses v2**
+
+**If you have a newer version that is not in this table, then open a issue
+and i will try to add support for it**
 
 This plugin uses similar API calls as
 [homebridge-levoitcore-client](https://github.com/tushardhadiwal/homebridge-levoitcore-client) but with differences on API implementation
@@ -26,7 +27,7 @@ Any device from VeSync that is not listed in the supported versions are automati
 ### Features
 
 1. Displaying the air quality (the same display as the one on the physical device)
-2. Display the PM2.5 Density value in Home App shown in µg/m^3
+2. Display the PM2.5 Density value in Home App shown in µg/m^3 (Not for 200S)
 3. Child Lock option
 4. Speed option:
    - 0 -> Off

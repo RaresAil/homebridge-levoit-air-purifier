@@ -89,9 +89,11 @@ export default class VeSyncAccessory {
         .getCharacteristic(this.platform.Characteristic.AirQuality)
         .onGet(AirQuality.get.bind(this));
 
-      this.airQualitySensorService
-        .getCharacteristic(this.platform.Characteristic.PM2_5Density)
-        .onGet(PM25Density.get.bind(this));
+      if (this.device.deviceType.hasPM25) {
+        this.airQualitySensorService
+          .getCharacteristic(this.platform.Characteristic.PM2_5Density)
+          .onGet(PM25Density.get.bind(this));
+      }
 
       this.airPurifierService
         .getCharacteristic(this.platform.Characteristic.FilterChangeIndication)
