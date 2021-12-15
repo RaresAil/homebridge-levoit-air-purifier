@@ -1,10 +1,10 @@
 {
-  "description": "Made for Core 200S/300S/400S/400S Pro",
+  "description": "Made for Core 200S/300S/400S/400S Pro/600S",
   "name": "homebridge-levoit-air-purifier",
   "displayName": "Levoit Air Purifier",
   "main": "dist/index.js",
   "license": "Apache-2.0",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": false,
   "bugs": {
     "url": "https://github.com/RaresAil/homebridge-levoit-air-purifier/issues"
@@ -48,6 +48,7 @@
     "levoit",
     "200s",
     "300s",
-    "400s"
+    "400s",
+    "600s"
   ]
 }
