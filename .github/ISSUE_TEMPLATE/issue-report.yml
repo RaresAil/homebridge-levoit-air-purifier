@@ -1,0 +1,53 @@
+name: Plugin Issue Report
+description: Report an issue about the plugin
+labels: ["Bug"]
+assignees:
+  - RaresAil
+body:
+  - type: textarea
+    attributes:
+      label: Describe The Bug
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs
+      description: !!REMOVE any sensitive information!!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Plugin Config
+      description: !!Show your Homebridge config.json here, REMOVE any sensitive information.!!
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Plugin Version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Homebridge Version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Node.js Version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: NPM Version
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Operating System
+    validations:
+      required: true
