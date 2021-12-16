@@ -1,5 +1,6 @@
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![Build and Lint](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/build.yml/badge.svg)](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/build.yml)
+[![CodeQL](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/codeql-analysis.yml)
 
 # Homebridge Levoit Air Purifier
 
@@ -27,7 +28,7 @@ Any device from VeSync that is not listed in the supported versions are automati
 
 ### Features
 
-1. Displaying the air quality (the same display as the one on the physical device)
+1. Displaying the air quality (the same display as the one on the physical device) (Not for 200S)
 2. Display the PM2.5 Density value in Home App shown in µg/m^3 (Not for 200S)
 3. Child Lock option
 4. Speed option:
