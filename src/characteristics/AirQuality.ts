@@ -11,6 +11,10 @@ const characteristic: {
   get: CharacteristicGetHandler;
 } & AccessoryThisType = {
   get: async function (): Promise<Nullable<CharacteristicValue>> {
+    if (!this.device.deviceType.hasAirQuality) {
+      return AirQuality.UNKNOWN;
+    }
+
     await this.device.updateInfo();
 
     switch (this.device.airQualityLevel) {

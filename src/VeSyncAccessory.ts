@@ -85,9 +85,11 @@ export default class VeSyncAccessory {
         .onGet(RotationSpeed.get.bind(this))
         .onSet(RotationSpeed.set.bind(this));
 
-      this.airQualitySensorService
-        .getCharacteristic(this.platform.Characteristic.AirQuality)
-        .onGet(AirQuality.get.bind(this));
+      if (this.device.deviceType.hasAirQuality) {
+        this.airQualitySensorService
+          .getCharacteristic(this.platform.Characteristic.AirQuality)
+          .onGet(AirQuality.get.bind(this));
+      }
 
       if (this.device.deviceType.hasPM25) {
         this.airQualitySensorService
