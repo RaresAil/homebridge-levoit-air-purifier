@@ -7,6 +7,7 @@ This is a Homebridge plugin to control Levoit Air Purifiers with via the VeSync 
 
 | Supported Versions | Tested |
 | ------------------ | ------ |
+| Core 600S          | ✅     |
 | Core 400S Pro      | ✅     |
 | Core 400S          | ✅     |
 | Core 300S          | ✅     |
@@ -35,7 +36,7 @@ Any device from VeSync that is not listed in the supported versions are automati
    - 2 -> Level 1
    - 3 -> Level 2
    - 4 -> Level 3
-   - 5 -> Level 4 (Only for Core 400S and 400S Pro)
+   - 5 -> Level 4 (Only for Core 400S, 400S Pro and 600S)
 5. Filter Change Indicator & Filter Life Level
 6. Mode change (Not for 200S)
    - Auto
