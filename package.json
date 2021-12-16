@@ -4,7 +4,7 @@
   "displayName": "Levoit Air Purifier",
   "main": "dist/index.js",
   "license": "Apache-2.0",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "private": false,
   "bugs": {
     "url": "https://github.com/RaresAil/homebridge-levoit-air-purifier/issues"
@@ -12,6 +12,10 @@
   "repository": {
     "url": "git://github.com/RaresAil/homebridge-levoit-air-purifier.git",
     "type": "git"
+  },
+  "funding": {
+    "url": "https://www.paypal.com/donate/?hosted_button_id=5GM8SZ2YNVK5Q",
+    "type": "paypal"
   },
   "scripts": {
     "remove-link": "npm -g remove homebridge-levoit-air-purifier",

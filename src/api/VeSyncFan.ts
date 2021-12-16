@@ -29,6 +29,10 @@ export default class VeSyncFan {
   public readonly manufacturer = 'Levoit';
 
   public get airQualityLevel() {
+    if (!this.deviceType.hasAirQuality) {
+      return AirQuality.UNKNOWN;
+    }
+
     return this._airQualityLevel;
   }
   public get screenVisible() {
@@ -154,7 +158,9 @@ export default class VeSyncFan {
         const result = data?.result?.result;
 
         this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
-        this._airQualityLevel = result.air_quality;
+        this._airQualityLevel = this.deviceType.hasAirQuality
+          ? result.air_quality
+          : AirQuality.UNKNOWN;
         this._filterLife = result.filter_life;
         this._screenVisible = result.display;
         this._childLock = result.child_lock;

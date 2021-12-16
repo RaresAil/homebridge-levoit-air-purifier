@@ -10,6 +10,7 @@ export enum DeviceName {
 
 export interface DeviceType {
   isValid: (input: string) => boolean;
+  hasAirQuality: boolean;
   hasAutoMode: boolean;
   speedMinStep: number;
   speedLevels: number; // With night mode
@@ -23,6 +24,7 @@ const deviceTypes: DeviceType[] = [
       input.includes(DeviceName.Core600S) ||
       input.includes(DeviceName.Core401S) ||
       input.includes(DeviceName.Core400S),
+    hasAirQuality: true,
     hasAutoMode: true,
     speedMinStep: 20,
     speedLevels: 5,
@@ -30,6 +32,7 @@ const deviceTypes: DeviceType[] = [
   },
   {
     isValid: (input: string) => input.includes(DeviceName.Core300S),
+    hasAirQuality: true,
     hasAutoMode: true,
     speedMinStep: 25,
     speedLevels: 4,
@@ -39,6 +42,7 @@ const deviceTypes: DeviceType[] = [
     isValid: (input: string) =>
       input.includes(DeviceName.Core201S) ||
       input.includes(DeviceName.Core200S),
+    hasAirQuality: false,
     hasAutoMode: false,
     speedMinStep: 25,
     speedLevels: 4,
