@@ -1,11 +1,12 @@
+import Big from 'big.js';
 import {
   CharacteristicGetHandler,
   CharacteristicSetHandler,
   CharacteristicValue,
   Nullable
 } from 'homebridge';
-import VeSyncFan, { Mode } from '../api/VeSyncFan';
 
+import VeSyncFan, { Mode } from '../api/VeSyncFan';
 import { AccessoryThisType } from '../VeSyncAccessory';
 
 const calculateSpeed = (device: VeSyncFan) => {
@@ -27,18 +28,23 @@ const characteristic: {
     return calculateSpeed(this.device);
   },
   set: async function (value: CharacteristicValue) {
-    const parsedValue = Math.round(
-      parseInt(value.toString(), 10) / this.device.deviceType.speedMinStep
+    const realValue = new Big(parseInt(value.toString(), 10)).div(
+      this.device.deviceType.speedMinStep
     );
 
-    if (parsedValue - 1 === this.device.speed) {
+    let lastSpeed = this.device.speed;
+    if (this.device.mode === Mode.Sleep) {
+      lastSpeed = 0;
+    }
+
+    if (realValue.eq(lastSpeed + 1)) {
       return;
     }
 
-    if (parsedValue === 1) {
+    if (realValue.eq(1)) {
       await this.device.changeMode(Mode.Sleep);
-    } else if (parsedValue > 1) {
-      await this.device.changeSpeed(parsedValue - 1);
+    } else if (realValue.gt(1)) {
+      await this.device.changeSpeed(realValue.toNumber() - 1);
     }
   }
 };
