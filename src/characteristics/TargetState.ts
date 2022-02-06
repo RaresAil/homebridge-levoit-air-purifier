@@ -35,12 +35,12 @@ const characteristic: {
     switch (value) {
       case AUTO:
         if (this.device.mode !== Mode.Auto) {
-          this.device.changeMode(Mode.Auto);
+          await this.device.changeMode(Mode.Auto);
         }
         break;
       case MANUAL:
         if (this.device.mode !== Mode.Manual) {
-          this.device.changeMode(Mode.Manual);
+          await this.device.changeMode(Mode.Manual);
         }
         break;
     }
