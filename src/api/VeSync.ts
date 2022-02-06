@@ -26,7 +26,7 @@ export default class VeSync {
   private accountId?: string;
   private token?: string;
 
-  private readonly VERSION = '1.1.8';
+  private readonly VERSION = '1.1.9';
   private readonly AGENT = `VeSync/VeSync 3.0.51(F5321;HomeBridge-VeSync ${this.VERSION})`;
   private readonly TIMEZONE = 'America/New_York';
   private readonly OS = 'HomeBridge-VeSync';
@@ -34,7 +34,7 @@ export default class VeSync {
 
   private readonly AXIOS_OPTIONS = {
     baseURL: 'https://smartapi.vesync.com',
-    timeout: 15000
+    timeout: 30000
   };
 
   constructor(
@@ -315,7 +315,7 @@ export default class VeSync {
           )
           .map(VeSyncFan.fromResponse(this));
 
-        await delay(500);
+        await delay(1500);
 
         return devices;
       } catch (error: any) {
