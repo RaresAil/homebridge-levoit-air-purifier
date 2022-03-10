@@ -1,6 +1,10 @@
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
+
 [![Build and Lint](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/build.yml/badge.svg)](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/build.yml)
 [![CodeQL](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/RaresAil/homebridge-levoit-air-purifier/actions/workflows/codeql-analysis.yml)
+
+![NPM Package Downloads](https://badgen.net/npm/dm/homebridge-levoit-air-purifier)
+![Snyk Vulnerabilities for NPM Package](https://img.shields.io/snyk/vulnerabilities/npm/homebridge-levoit-air-purifier)
 
 # Homebridge Levoit Air Purifier
 

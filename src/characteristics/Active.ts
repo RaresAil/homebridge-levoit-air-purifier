@@ -6,6 +6,7 @@ import {
 } from 'homebridge';
 
 import { AccessoryThisType } from '../VeSyncAccessory';
+import { delay } from '../util';
 
 const characteristic: {
   get: CharacteristicGetHandler;
@@ -17,11 +18,24 @@ const characteristic: {
     return this.device.isOn;
   },
   set: async function (value: CharacteristicValue) {
-    const boolValue = value === 1;
+    let boolValue = value === 1;
 
     if (boolValue !== this.device.isOn) {
-      await this.device.setPower(boolValue);
+      const success = await this.device.setPower(boolValue);
+
+      if (!success) {
+        boolValue = !boolValue;
+      }
+    } else {
+      await delay(10);
     }
+
+    const { PURIFYING_AIR, INACTIVE } =
+      this.platform.Characteristic.CurrentAirPurifierState;
+
+    this.airPurifierCurrentCharacteristic!.updateValue(
+      boolValue ? PURIFYING_AIR : INACTIVE
+    );
   }
 };
 
