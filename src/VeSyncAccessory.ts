@@ -1,4 +1,4 @@
-import { Service } from 'homebridge';
+import { Characteristic, Service } from 'homebridge';
 
 import FilterChangeIndication from './characteristics/FilterChangeIndication';
 import LockPhysicalControls from './characteristics/LockPhysicalControls';
@@ -13,12 +13,14 @@ import Active from './characteristics/Active';
 import VeSyncFan from './api/VeSyncFan';
 
 export type AccessoryThisType = ThisType<{
+  airPurifierCurrentCharacteristic?: Characteristic;
   airPurifierService: Service;
   platform: Platform;
   device: VeSyncFan;
 }>;
 
 export default class VeSyncAccessory {
+  private airPurifierCurrentCharacteristic?: Characteristic;
   private airQualitySensorService?: Service;
   private airPurifierService?: Service;
 
@@ -62,7 +64,7 @@ export default class VeSyncAccessory {
         .onGet(Active.get.bind(this))
         .onSet(Active.set.bind(this));
 
-      this.airPurifierService
+      this.airPurifierCurrentCharacteristic = this.airPurifierService
         .getCharacteristic(this.platform.Characteristic.CurrentAirPurifierState)
         .onGet(CurrentState.get.bind(this));
 
