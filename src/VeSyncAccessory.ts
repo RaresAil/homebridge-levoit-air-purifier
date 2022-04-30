@@ -51,13 +51,31 @@ export default class VeSyncAccessory {
       this.airPurifierService =
         this.accessory.getService(this.platform.Service.AirPurifier) ||
         this.accessory.addService(this.platform.Service.AirPurifier);
-
-      this.airQualitySensorService =
-        this.accessory.getService(this.platform.Service.AirQualitySensor) ||
-        this.accessory.addService(this.platform.Service.AirQualitySensor);
-
       this.airPurifierService.setPrimaryService(true);
-      this.airPurifierService.addLinkedService(this.airQualitySensorService);
+
+      this.airQualitySensorService = this.accessory.getService(
+        this.platform.Service.AirQualitySensor
+      );
+
+      if (this.device.deviceType.hasAirQuality) {
+        this.airQualitySensorService =
+          this.airQualitySensorService ||
+          this.accessory.addService(this.platform.Service.AirQualitySensor);
+
+        this.airPurifierService.addLinkedService(this.airQualitySensorService);
+
+        this.airQualitySensorService
+          .getCharacteristic(this.platform.Characteristic.AirQuality)
+          .onGet(AirQuality.get.bind(this));
+
+        if (this.device.deviceType.hasPM25) {
+          this.airQualitySensorService
+            .getCharacteristic(this.platform.Characteristic.PM2_5Density)
+            .onGet(PM25Density.get.bind(this));
+        }
+      } else if (this.airQualitySensorService) {
+        this.accessory.removeService(this.airQualitySensorService);
+      }
 
       this.airPurifierService
         .getCharacteristic(this.platform.Characteristic.Active)
@@ -86,18 +104,6 @@ export default class VeSyncAccessory {
         })
         .onGet(RotationSpeed.get.bind(this))
         .onSet(RotationSpeed.set.bind(this));
-
-      if (this.device.deviceType.hasAirQuality) {
-        this.airQualitySensorService
-          .getCharacteristic(this.platform.Characteristic.AirQuality)
-          .onGet(AirQuality.get.bind(this));
-      }
-
-      if (this.device.deviceType.hasPM25) {
-        this.airQualitySensorService
-          .getCharacteristic(this.platform.Characteristic.PM2_5Density)
-          .onGet(PM25Density.get.bind(this));
-      }
 
       this.airPurifierService
         .getCharacteristic(this.platform.Characteristic.FilterChangeIndication)

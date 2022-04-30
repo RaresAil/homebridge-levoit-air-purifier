@@ -26,7 +26,7 @@ export default class VeSync {
   private accountId?: string;
   private token?: string;
 
-  private readonly VERSION = '1.1.12';
+  private readonly VERSION = '1.1.13';
   private readonly AGENT = `VeSync/VeSync 3.0.51(F5321;HomeBridge-VeSync ${this.VERSION})`;
   private readonly TIMEZONE = 'America/New_York';
   private readonly OS = 'HomeBridge-VeSync';
