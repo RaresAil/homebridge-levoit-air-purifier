@@ -19,7 +19,14 @@ export interface VeSyncContext {
   device: VeSyncFan;
 }
 
-export type VeSyncPlatformAccessory = PlatformAccessory<VeSyncContext>;
+export interface VeSyncSensorContext {
+  name: string;
+  parent: string;
+}
+
+export type VeSyncPlatformAccessory = PlatformAccessory<
+  VeSyncContext | VeSyncSensorContext
+>;
 
 export default class Platform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -27,6 +34,7 @@ export default class Platform implements DynamicPlatformPlugin {
     this.api.hap.Characteristic;
 
   public readonly cachedAccessories: VeSyncPlatformAccessory[] = [];
+  public readonly cachedSensors: VeSyncPlatformAccessory[] = [];
   public readonly registeredDevices: VeSyncAccessory[] = [];
 
   public readonly debugger: DebugMode;
@@ -60,24 +68,28 @@ export default class Platform implements DynamicPlatformPlugin {
   }
 
   configureAccessory(accessory: VeSyncPlatformAccessory) {
+    if ((accessory.context as VeSyncSensorContext).parent) {
+      this.cachedSensors.push(accessory);
+      return;
+    }
+
     this.log.info('Loading accessory from cache:', accessory.displayName);
     this.cachedAccessories.push(accessory);
   }
 
   private cleanAccessories() {
     try {
-      if (this.cachedAccessories.length > 0) {
+      if (this.cachedAccessories.length > 0 || this.cachedSensors.length > 0) {
         this.debugger.debug(
           '[PLATFORM]',
           'Removing cached accessories because the email and password are not set (Count:',
           `${this.cachedAccessories.length})`
         );
 
-        this.api.unregisterPlatformAccessories(
-          PLUGIN_NAME,
-          PLATFORM_NAME,
-          this.cachedAccessories
-        );
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          ...this.cachedAccessories,
+          ...this.cachedSensors
+        ]);
       }
     } catch (error: any) {
       this.log.error(`Error for cached accessories: ${error?.message}`);
@@ -116,6 +128,30 @@ export default class Platform implements DynamicPlatformPlugin {
         (accessory) => accessory.UUID === uuid
       );
 
+      let sensor = this.cachedSensors.find(
+        (sensor) => (sensor.context as VeSyncSensorContext).parent === uuid
+      );
+
+      if (!sensor && device.deviceType.hasAirQuality) {
+        sensor = new this.api.platformAccessory<VeSyncSensorContext>(
+          `${name} Sensor`,
+          this.api.hap.uuid.generate(`${uuid}-sensor`)
+        );
+
+        sensor.context = {
+          name: `${name} Sensor`,
+          parent: uuid
+        };
+
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          sensor
+        ]);
+      } else if (sensor && !device.deviceType.hasAirQuality) {
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          sensor
+        ]);
+      }
+
       if (existingAccessory) {
         this.log.info(
           'Restoring existing accessory from cache:',
@@ -128,7 +164,7 @@ export default class Platform implements DynamicPlatformPlugin {
         };
 
         this.registeredDevices.push(
-          new VeSyncAccessory(this, existingAccessory)
+          new VeSyncAccessory(this, existingAccessory, sensor)
         );
 
         return;
@@ -144,7 +180,7 @@ export default class Platform implements DynamicPlatformPlugin {
         device
       };
 
-      this.registeredDevices.push(new VeSyncAccessory(this, accessory));
+      this.registeredDevices.push(new VeSyncAccessory(this, accessory, sensor));
       return this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory
       ]);
@@ -157,16 +193,32 @@ export default class Platform implements DynamicPlatformPlugin {
   }
 
   private checkOldDevices() {
+    const registeredDevices = this.registeredDevices.reduce(
+      (acc, device) => ({
+        ...acc,
+        [device.UUID]: true
+      }),
+      {}
+    );
+
+    const sensors = this.cachedSensors.reduce(
+      (acc, device) => ({
+        ...acc,
+        [(device.context as VeSyncSensorContext).parent ?? '']: device
+      }),
+      {}
+    );
+
     this.cachedAccessories.map((accessory) => {
       try {
-        const exists = this.registeredDevices.find(
-          (device) => device.UUID === accessory.UUID
-        );
+        const exists = registeredDevices[accessory.UUID];
+        const sensor = sensors[accessory.UUID];
 
         if (!exists) {
           this.log.info('Remove cached accessory:', accessory.displayName);
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-            accessory
+            accessory,
+            ...(sensor ? [sensor] : [])
           ]);
         }
       } catch (error: any) {

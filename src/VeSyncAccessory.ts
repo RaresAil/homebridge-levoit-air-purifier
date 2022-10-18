@@ -1,9 +1,9 @@
 import { Characteristic, Service } from 'homebridge';
 
+import Platform, { VeSyncContext, VeSyncPlatformAccessory } from './platform';
 import FilterChangeIndication from './characteristics/FilterChangeIndication';
 import LockPhysicalControls from './characteristics/LockPhysicalControls';
 import FilterLifeLevel from './characteristics/FilterLifeLevel';
-import Platform, { VeSyncPlatformAccessory } from './platform';
 import RotationSpeed from './characteristics/RotationSpeed';
 import CurrentState from './characteristics/CurrentState';
 import PM25Density from './characteristics/PM25Density';
@@ -21,7 +21,6 @@ export type AccessoryThisType = ThisType<{
 
 export default class VeSyncAccessory {
   private airPurifierCurrentCharacteristic?: Characteristic;
-  private airQualitySensorService?: Service;
   private airPurifierService?: Service;
 
   public get UUID() {
@@ -29,12 +28,13 @@ export default class VeSyncAccessory {
   }
 
   private get device() {
-    return this.accessory.context.device;
+    return (this.accessory.context as VeSyncContext).device;
   }
 
   constructor(
     private readonly platform: Platform,
-    private readonly accessory: VeSyncPlatformAccessory
+    private readonly accessory: VeSyncPlatformAccessory,
+    private readonly sensor?: VeSyncPlatformAccessory
   ) {
     try {
       const { manufacturer, model, mac } = this.device;
@@ -51,30 +51,38 @@ export default class VeSyncAccessory {
       this.airPurifierService =
         this.accessory.getService(this.platform.Service.AirPurifier) ||
         this.accessory.addService(this.platform.Service.AirPurifier);
-      this.airPurifierService.setPrimaryService(true);
 
-      this.airQualitySensorService = this.accessory.getService(
-        this.platform.Service.AirQualitySensor
-      );
+      if (this.sensor) {
+        this.sensor
+          .getService(this.platform.Service.AccessoryInformation)!
+          .setCharacteristic(
+            this.platform.Characteristic.Manufacturer,
+            manufacturer
+          )
+          .setCharacteristic(this.platform.Characteristic.Model, model)
+          .setCharacteristic(this.platform.Characteristic.SerialNumber, mac);
 
-      if (this.device.deviceType.hasAirQuality) {
-        this.airQualitySensorService =
-          this.airQualitySensorService ||
-          this.accessory.addService(this.platform.Service.AirQualitySensor);
+        const airQualitySensorService =
+          this.sensor.getService(this.platform.Service.AirQualitySensor) ||
+          this.sensor.addService(this.platform.Service.AirQualitySensor);
 
-        this.airPurifierService.addLinkedService(this.airQualitySensorService);
-
-        this.airQualitySensorService
+        airQualitySensorService
           .getCharacteristic(this.platform.Characteristic.AirQuality)
           .onGet(AirQuality.get.bind(this));
 
         if (this.device.deviceType.hasPM25) {
-          this.airQualitySensorService
+          airQualitySensorService
             .getCharacteristic(this.platform.Characteristic.PM2_5Density)
             .onGet(PM25Density.get.bind(this));
         }
-      } else if (this.airQualitySensorService) {
-        this.accessory.removeService(this.airQualitySensorService);
+      }
+
+      const legacySensor = this.accessory.getService(
+        this.platform.Service.AirQualitySensor
+      );
+
+      if (legacySensor) {
+        this.accessory.removeService(legacySensor);
       }
 
       this.airPurifierService
