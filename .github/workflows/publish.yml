@@ -50,6 +50,6 @@ jobs:
           [ -f .prerelease ] && cat .prerelease >> $GITHUB_ENV
           echo "Tag check: $NPM_EX"
       - name: Publish
-        run: npm publish
+        run: npm publish ${{ env.NPM_EX }}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
