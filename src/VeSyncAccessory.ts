@@ -14,12 +14,14 @@ import VeSyncFan from './api/VeSyncFan';
 
 export type AccessoryThisType = ThisType<{
   airPurifierCurrentCharacteristic?: Characteristic;
+  HomeAirQuality: VeSyncAccessory['HomeAirQuality'];
   airPurifierService: Service;
   platform: Platform;
   device: VeSyncFan;
 }>;
 
 export default class VeSyncAccessory {
+  private HomeAirQuality = this.platform.Characteristic.AirQuality;
   private airPurifierCurrentCharacteristic?: Characteristic;
   private airPurifierService?: Service;
 
@@ -68,6 +70,15 @@ export default class VeSyncAccessory {
 
         airQualitySensorService
           .getCharacteristic(this.platform.Characteristic.AirQuality)
+          .setProps({
+            validValues: [
+              this.HomeAirQuality.UNKNOWN,
+              this.HomeAirQuality.EXCELLENT,
+              this.HomeAirQuality.GOOD,
+              this.HomeAirQuality.INFERIOR,
+              this.HomeAirQuality.POOR
+            ]
+          })
           .onGet(AirQuality.get.bind(this));
 
         if (this.device.deviceType.hasPM25) {

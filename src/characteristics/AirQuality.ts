@@ -12,22 +12,22 @@ const characteristic: {
 } & AccessoryThisType = {
   get: async function (): Promise<Nullable<CharacteristicValue>> {
     if (!this.device.deviceType.hasAirQuality) {
-      return AirQuality.UNKNOWN;
+      return this.HomeAirQuality.UNKNOWN;
     }
 
     await this.device.updateInfo();
 
     switch (this.device.airQualityLevel) {
       case AirQuality.VERY_GOOD:
-        return 1;
+        return this.HomeAirQuality.EXCELLENT;
       case AirQuality.GOOD:
-        return 2;
+        return this.HomeAirQuality.GOOD;
       case AirQuality.MODERATE:
-        return 4;
+        return this.HomeAirQuality.INFERIOR;
       case AirQuality.POOR:
-        return 5;
+        return this.HomeAirQuality.POOR;
       default:
-        return 0;
+        return this.HomeAirQuality.UNKNOWN;
     }
   }
 };
