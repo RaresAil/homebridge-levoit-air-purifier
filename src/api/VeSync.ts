@@ -306,14 +306,29 @@ export default class VeSync {
           JSON.stringify(list)
         );
 
-        const devices = list
-          .filter(
-            ({ deviceType, type, extension }) =>
-              !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
-              type === 'wifi-air' &&
-              !!extension?.fanSpeedLevel
-          )
-          .map(VeSyncFan.fromResponse(this));
+        const parseDevices = (acc, device) => {
+          const { deviceType, type, extension, deviceProp } = device;
+
+          const deviceTypeInfo = deviceTypes.find(({ isValid }) =>
+            isValid(deviceType)
+          );
+
+          if (!deviceType || type !== 'wifi-air') {
+            return acc;
+          }
+
+          if (extension?.fanSpeedLevel) {
+            return [...acc, VeSyncFan.fromResponse(this)(device)];
+          }
+
+          if (deviceTypeInfo?.isEverest && deviceProp) {
+            return [...acc, VeSyncFan.fromResponseEverest(this)(device)];
+          }
+
+          return acc;
+        };
+
+        const devices = list.reduce(parseDevices, []);
 
         await delay(1500);
 

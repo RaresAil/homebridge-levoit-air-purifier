@@ -200,4 +200,31 @@ export default class VeSyncFan {
         deviceType,
         macID
       );
+
+  public static fromResponseEverest =
+    (client: VeSync) =>
+    ({
+      deviceProp: { powerSwitch, AQLevel, fanSpeedLevel, workMode },
+      deviceName,
+      uuid,
+      configModule,
+      cid,
+      deviceRegion,
+      deviceType,
+      macID
+    }) =>
+      new VeSyncFan(
+        client,
+        deviceName,
+        workMode,
+        fanSpeedLevel ?? 0,
+        uuid,
+        powerSwitch === 1,
+        AQLevel,
+        configModule,
+        cid,
+        deviceRegion,
+        deviceType,
+        macID
+      );
 }
