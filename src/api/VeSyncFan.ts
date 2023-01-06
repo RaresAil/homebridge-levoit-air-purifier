@@ -69,7 +69,7 @@ export default class VeSyncFan {
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
-  constructor (
+  constructor(
     private readonly client: VeSync,
     public readonly name: string,
     private _mode: Mode,
@@ -214,6 +214,33 @@ export default class VeSyncFan {
           uuid,
           deviceStatus === 'on',
           airQualityLevel,
+          configModule,
+          cid,
+          deviceRegion,
+          deviceType,
+          macID
+        );
+
+  public static fromResponseEverest =
+    (client: VeSync) =>
+      ({
+        deviceProp: { powerSwitch, AQLevel, fanSpeedLevel, workMode },
+        deviceName,
+        uuid,
+        configModule,
+        cid,
+        deviceRegion,
+        deviceType,
+        macID
+      }) =>
+        new VeSyncFan(
+          client,
+          deviceName,
+          workMode,
+          fanSpeedLevel ?? 0,
+          uuid,
+          powerSwitch === 1,
+          AQLevel,
           configModule,
           cid,
           deviceRegion,

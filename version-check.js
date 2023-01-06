@@ -1,7 +1,7 @@
-const fs = require('fs');
-const package = require('./package.json');
+const fs = require("fs");
+const package = require("./package.json");
 
-console.log('Version: %o', package.version);
+console.log("Version: %o", package.version);
 
 if (package.version.includes("-rc")) {
   const name = package.version
