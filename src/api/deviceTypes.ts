@@ -3,6 +3,7 @@ export enum DeviceName {
   Core600S = '600S',
   Core401S = '401S',
   Core400S = '400S',
+  Core302S = '302S',
   Core301S = '301S',
   Core300S = '300S',
   Core201S = '201S',
@@ -33,6 +34,7 @@ const deviceTypes: DeviceType[] = [
   },
   {
     isValid: (input: string) =>
+      input.includes(DeviceName.Core302S) ||
       input.includes(DeviceName.Core301S) ||
       input.includes(DeviceName.Core300S),
     hasAirQuality: true,
