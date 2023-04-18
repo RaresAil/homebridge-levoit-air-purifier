@@ -165,6 +165,12 @@ export default class VeSync {
 
         await delay(500);
 
+        this.debugMode.debug(
+          '[GET DEVICE INFO]',
+          'JSON:',
+          JSON.stringify(response.data)
+        );
+
         return response.data;
       } catch (error: any) {
         this.log.error(
