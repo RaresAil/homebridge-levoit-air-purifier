@@ -4,7 +4,7 @@
   "displayName": "Levoit Air Purifier",
   "main": "dist/index.js",
   "license": "Apache-2.0",
-  "version": "1.2.3-rc2.light",
+  "version": "1.3.0",
   "private": false,
   "bugs": {
     "url": "https://github.com/RaresAil/homebridge-levoit-air-purifier/issues"
@@ -48,7 +48,6 @@
     "big.js": "^6.2.1"
   },
   "resolutions": {
-    "dns-packet": "^5.4.0",
     "xml2js": "^0.5.0"
   },
   "keywords": [

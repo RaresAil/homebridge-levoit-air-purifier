@@ -69,7 +69,7 @@ export default class VeSyncFan {
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
-  constructor(
+  constructor (
     private readonly client: VeSync,
     public readonly name: string,
     private _mode: Mode,
@@ -150,7 +150,7 @@ export default class VeSyncFan {
 
   public async setDisplay(display: boolean): Promise<boolean> {
     const success = await this.client.sendCommand(this, BypassMethod.DISPLAY, {
-      display,
+      state: display,
       id: 0
     });
 

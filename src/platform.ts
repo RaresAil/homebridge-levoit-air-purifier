@@ -54,7 +54,7 @@ export default class Platform implements DynamicPlatformPlugin {
   public readonly debugger: DebugMode;
   private readonly client?: VeSync;
 
-  constructor(
+  constructor (
     public readonly log: Logger,
     public readonly config: Config,
     public readonly api: API
@@ -228,7 +228,8 @@ export default class Platform implements DynamicPlatformPlugin {
   private loadAdditional(device: VeSyncFan) {
     const { uuid, name } = device;
 
-    const features = this.config.experimentalFeatures.reduce((acc, feature) => ({ ...acc, [feature]: 1 }), {} as Record<ExperimentalFeatures, number>);
+    const features = this.config.experimentalFeatures
+      ?.reduce((acc, feature) => ({ ...acc, [feature]: 1 }), {} as Record<ExperimentalFeatures, number>) || {};
 
     const additionalAccessories = this.cachedAdditional.reduce(
       (acc, additional) => {
@@ -267,7 +268,7 @@ export default class Platform implements DynamicPlatformPlugin {
       delete additionalAccessories[VeSyncAdditionalType.Sensor];
     }
 
-    if (features[ExperimentalFeatures.DeviceDisplay] && additionalAccessories[VeSyncAdditionalType.Light]) {
+    if (features[ExperimentalFeatures.DeviceDisplay] && !additionalAccessories[VeSyncAdditionalType.Light]) {
       additionalAccessories[VeSyncAdditionalType.Light] = new this.api.platformAccessory<VeSyncAdditionalContext>(
         `${name} Display`,
         this.api.hap.uuid.generate(`${uuid}-light`)
