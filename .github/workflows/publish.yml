@@ -14,7 +14,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.0
-          cache: 'npm'
+          cache: "npm"
       - name: Install dependencies
         run: npm install
       - name: Lint the project
@@ -36,7 +36,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.0
-          cache: 'npm'
+          cache: "npm"
           registry-url: https://registry.npmjs.org/
       - name: Install dependencies
         run: npm install
@@ -44,6 +44,11 @@ jobs:
         run: npm run build
         env:
           CI: true
+      - name: Check Version
+        run: |
+          node version-check.js
+          [ -f .prerelease ] && cat .prerelease >> $GITHUB_ENV
+          echo "Tag check: $NPM_EX"
       - name: Publish
         run: npm publish
         env:

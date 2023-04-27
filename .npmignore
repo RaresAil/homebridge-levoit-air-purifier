@@ -135,3 +135,5 @@ dist
 .pnp.*
 
 .DS_Store
+.prerelease
+version-check.js
