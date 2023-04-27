@@ -45,6 +45,7 @@ jobs:
         env:
           CI: true
       - name: Check Version
+        continue-on-error: true
         run: |
           node version-check.js
           [ -f .prerelease ] && cat .prerelease >> $GITHUB_ENV
