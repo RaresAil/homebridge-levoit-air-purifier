@@ -22,6 +22,16 @@
         "type": "string",
         "required": true,
         "description": "VeSync's account password"
+      },
+      "experimentalFeatures": {
+        "title": "Experimental Features",
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "title": "Feature",
+          "type": "string",
+          "enum": ["DeviceDisplay"]
+        }
       }
     }
   }
