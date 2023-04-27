@@ -9,7 +9,7 @@
     "ecmaVersion": 2018,
     "sourceType": "module"
   },
-  "ignorePatterns": ["dist"],
+  "ignorePatterns": ["dist", "version-check.js"],
   "rules": {
     "semi": ["error", "always"],
     "space-before-function-paren": "off",
