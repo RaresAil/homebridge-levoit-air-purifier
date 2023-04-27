@@ -47,6 +47,18 @@ Any device from VeSync that is not listed in the supported versions are automati
    - Auto
    - Manual
 
+### Experimental Features
+
+For the experimental features to be activated you need to add them in the config file of the platform, e.g.
+```json
+{
+  "name": "Levoit Air Purifiers",
+  "experimentalFeatures": ["DeviceDisplay"]
+}
+```
+
+1. Show the display's switch as a light in the app (`DeviceDisplay`)
+
 The read data is cached for 5 seconds to not trigger the rate limiter for the API.
 Each request is delayed by 500ms to not trigger the rate limiter if a huge number of requests are sent.
 
@@ -70,7 +82,8 @@ You can also do this directly via the homebridge config by adding your credentia
       "name": "Levoit Air Purifiers",
       "email": "email",
       "password": "password",
-      "platform": "LevoitAirPurifiers"
+      "platform": "LevoitAirPurifiers",
+      "experimentalFeatures": []
     }
   ]
 }
