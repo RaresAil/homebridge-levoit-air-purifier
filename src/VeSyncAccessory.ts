@@ -1,6 +1,6 @@
 import { Characteristic, Service } from 'homebridge';
 
-import Platform, { VeSyncContext, VeSyncPlatformAccessory } from './platform';
+import Platform, { VeSyncAdditionalType, VeSyncContext, VeSyncPlatformAccessory } from './platform';
 import FilterChangeIndication from './characteristics/FilterChangeIndication';
 import LockPhysicalControls from './characteristics/LockPhysicalControls';
 import FilterLifeLevel from './characteristics/FilterLifeLevel';
@@ -11,6 +11,8 @@ import TargetState from './characteristics/TargetState';
 import AirQuality from './characteristics/AirQuality';
 import Active from './characteristics/Active';
 import VeSyncFan from './api/VeSyncFan';
+
+import DisplayLight from './experimentalCharacteristics/Display';
 
 export type AccessoryThisType = ThisType<{
   airPurifierCurrentCharacteristic?: Characteristic;
@@ -36,7 +38,7 @@ export default class VeSyncAccessory {
   constructor(
     private readonly platform: Platform,
     private readonly accessory: VeSyncPlatformAccessory,
-    private readonly sensor?: VeSyncPlatformAccessory
+    readonly additional: Record<VeSyncAdditionalType, VeSyncPlatformAccessory | undefined>
   ) {
     try {
       const { manufacturer, model, mac } = this.device;
@@ -54,8 +56,9 @@ export default class VeSyncAccessory {
         this.accessory.getService(this.platform.Service.AirPurifier) ||
         this.accessory.addService(this.platform.Service.AirPurifier);
 
-      if (this.sensor) {
-        this.sensor
+      const sensor = additional[VeSyncAdditionalType.Sensor];
+      if (sensor) {
+        sensor
           .getService(this.platform.Service.AccessoryInformation)!
           .setCharacteristic(
             this.platform.Characteristic.Manufacturer,
@@ -65,8 +68,8 @@ export default class VeSyncAccessory {
           .setCharacteristic(this.platform.Characteristic.SerialNumber, mac);
 
         const airQualitySensorService =
-          this.sensor.getService(this.platform.Service.AirQualitySensor) ||
-          this.sensor.addService(this.platform.Service.AirQualitySensor);
+          sensor.getService(this.platform.Service.AirQualitySensor) ||
+          sensor.addService(this.platform.Service.AirQualitySensor);
 
         airQualitySensorService
           .getCharacteristic(this.platform.Characteristic.AirQuality)
@@ -94,6 +97,27 @@ export default class VeSyncAccessory {
 
       if (legacySensor) {
         this.accessory.removeService(legacySensor);
+      }
+
+      const display = additional[VeSyncAdditionalType.Light];
+      if (display) {
+        display
+          .getService(this.platform.Service.AccessoryInformation)!
+          .setCharacteristic(
+            this.platform.Characteristic.Manufacturer,
+            manufacturer
+          )
+          .setCharacteristic(this.platform.Characteristic.Model, model)
+          .setCharacteristic(this.platform.Characteristic.SerialNumber, mac);
+
+        const displayLightService =
+          display.getService(this.platform.Service.Lightbulb) ||
+          display.addService(this.platform.Service.Lightbulb);
+
+        displayLightService
+          .getCharacteristic(this.platform.Characteristic.On)
+          .onGet(DisplayLight.get.bind(this))
+          .onSet(DisplayLight.set.bind(this));
       }
 
       this.airPurifierService

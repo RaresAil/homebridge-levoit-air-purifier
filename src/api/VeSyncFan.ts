@@ -35,24 +35,31 @@ export default class VeSyncFan {
 
     return this._airQualityLevel;
   }
+
   public get screenVisible() {
     return this._screenVisible;
   }
+
   public get filterLife() {
     return this._filterLife;
   }
+
   public get childLock() {
     return this._childLock;
   }
+
   public get speed() {
     return this._speed;
   }
+
   public get mode() {
     return this._mode;
   }
+
   public get isOn() {
     return this._isOn;
   }
+
   public get pm25() {
     if (!this.deviceType.hasPM25) {
       return 0;
@@ -62,7 +69,7 @@ export default class VeSyncFan {
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
-  constructor(
+  constructor (
     private readonly client: VeSync,
     public readonly name: string,
     private _mode: Mode,
@@ -141,6 +148,19 @@ export default class VeSyncFan {
     return success;
   }
 
+  public async setDisplay(display: boolean): Promise<boolean> {
+    const success = await this.client.sendCommand(this, BypassMethod.DISPLAY, {
+      state: display,
+      id: 0
+    });
+
+    if (success) {
+      this._screenVisible = display;
+    }
+
+    return success;
+  }
+
   public async updateInfo(): Promise<void> {
     return this.lock.acquire('update-info', async () => {
       try {
@@ -175,29 +195,29 @@ export default class VeSyncFan {
 
   public static fromResponse =
     (client: VeSync) =>
-    ({
-      deviceStatus,
-      deviceName,
-      extension: { airQualityLevel, fanSpeedLevel, mode },
-      uuid,
-      configModule,
-      cid,
-      deviceRegion,
-      deviceType,
-      macID
-    }) =>
-      new VeSyncFan(
-        client,
+      ({
+        deviceStatus,
         deviceName,
-        mode,
-        parseInt(fanSpeedLevel ?? '0', 10),
+        extension: { airQualityLevel, fanSpeedLevel, mode },
         uuid,
-        deviceStatus === 'on',
-        airQualityLevel,
         configModule,
         cid,
         deviceRegion,
         deviceType,
         macID
-      );
+      }) =>
+        new VeSyncFan(
+          client,
+          deviceName,
+          mode,
+          parseInt(fanSpeedLevel ?? '0', 10),
+          uuid,
+          deviceStatus === 'on',
+          airQualityLevel,
+          configModule,
+          cid,
+          deviceRegion,
+          deviceType,
+          macID
+        );
 }

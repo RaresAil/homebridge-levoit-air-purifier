@@ -10,6 +10,7 @@ import {
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import VeSyncAccessory from './VeSyncAccessory';
+import { ExperimentalFeatures } from './types';
 import VeSyncFan from './api/VeSyncFan';
 import DebugMode from './debugMode';
 import VeSync from './api/VeSync';
@@ -19,14 +20,27 @@ export interface VeSyncContext {
   device: VeSyncFan;
 }
 
-export interface VeSyncSensorContext {
+export enum VeSyncAdditionalType {
+  Sensor,
+  Light
+}
+
+export interface VeSyncAdditionalContext {
   name: string;
   parent: string;
+  type: VeSyncAdditionalType;
 }
 
 export type VeSyncPlatformAccessory = PlatformAccessory<
-  VeSyncContext | VeSyncSensorContext
+  VeSyncContext | VeSyncAdditionalContext
 >;
+
+export interface Config extends PlatformConfig {
+  experimentalFeatures: ExperimentalFeatures[];
+  enableDebugMode?: boolean;
+  password: string;
+  email: string;
+}
 
 export default class Platform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -34,15 +48,15 @@ export default class Platform implements DynamicPlatformPlugin {
     this.api.hap.Characteristic;
 
   public readonly cachedAccessories: VeSyncPlatformAccessory[] = [];
-  public readonly cachedSensors: VeSyncPlatformAccessory[] = [];
+  public readonly cachedAdditional: VeSyncPlatformAccessory[] = [];
   public readonly registeredDevices: VeSyncAccessory[] = [];
 
   public readonly debugger: DebugMode;
   private readonly client?: VeSync;
 
-  constructor(
+  constructor (
     public readonly log: Logger,
-    public readonly config: PlatformConfig,
+    public readonly config: Config,
     public readonly api: API
   ) {
     const { email, password, enableDebugMode } = this.config ?? {};
@@ -68,8 +82,9 @@ export default class Platform implements DynamicPlatformPlugin {
   }
 
   configureAccessory(accessory: VeSyncPlatformAccessory) {
-    if ((accessory.context as VeSyncSensorContext).parent) {
-      this.cachedSensors.push(accessory);
+    const additional = (accessory.context as VeSyncAdditionalContext);
+    if (additional.parent) {
+      this.cachedAdditional.push(accessory);
       return;
     }
 
@@ -79,7 +94,7 @@ export default class Platform implements DynamicPlatformPlugin {
 
   private cleanAccessories() {
     try {
-      if (this.cachedAccessories.length > 0 || this.cachedSensors.length > 0) {
+      if (this.cachedAccessories.length > 0 || this.cachedAdditional.length > 0) {
         this.debugger.debug(
           '[PLATFORM]',
           'Removing cached accessories because the email and password are not set (Count:',
@@ -88,7 +103,7 @@ export default class Platform implements DynamicPlatformPlugin {
 
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
           ...this.cachedAccessories,
-          ...this.cachedSensors
+          ...this.cachedAdditional
         ]);
       }
     } catch (error: any) {
@@ -128,29 +143,7 @@ export default class Platform implements DynamicPlatformPlugin {
         (accessory) => accessory.UUID === uuid
       );
 
-      let sensor = this.cachedSensors.find(
-        (sensor) => (sensor.context as VeSyncSensorContext).parent === uuid
-      );
-
-      if (!sensor && device.deviceType.hasAirQuality) {
-        sensor = new this.api.platformAccessory<VeSyncSensorContext>(
-          `${name} Sensor`,
-          this.api.hap.uuid.generate(`${uuid}-sensor`)
-        );
-
-        sensor.context = {
-          name: `${name} Sensor`,
-          parent: uuid
-        };
-
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-          sensor
-        ]);
-      } else if (sensor && !device.deviceType.hasAirQuality) {
-        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-          sensor
-        ]);
-      }
+      const additional = this.loadAdditional(device);
 
       if (existingAccessory) {
         this.log.info(
@@ -164,7 +157,7 @@ export default class Platform implements DynamicPlatformPlugin {
         };
 
         this.registeredDevices.push(
-          new VeSyncAccessory(this, existingAccessory, sensor)
+          new VeSyncAccessory(this, existingAccessory, additional)
         );
 
         return;
@@ -180,7 +173,7 @@ export default class Platform implements DynamicPlatformPlugin {
         device
       };
 
-      this.registeredDevices.push(new VeSyncAccessory(this, accessory, sensor));
+      this.registeredDevices.push(new VeSyncAccessory(this, accessory, additional));
       return this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory
       ]);
@@ -201,10 +194,13 @@ export default class Platform implements DynamicPlatformPlugin {
       {}
     );
 
-    const sensors = this.cachedSensors.reduce(
+    const additionalAccessories = this.cachedAdditional.reduce(
       (acc, device) => ({
         ...acc,
-        [(device.context as VeSyncSensorContext).parent ?? '']: device
+        [(device.context as VeSyncAdditionalContext).parent ?? '']: [
+          ...(acc[(device.context as VeSyncAdditionalContext).parent ?? ''] || []),
+          device
+        ]
       }),
       {}
     );
@@ -212,13 +208,13 @@ export default class Platform implements DynamicPlatformPlugin {
     this.cachedAccessories.map((accessory) => {
       try {
         const exists = registeredDevices[accessory.UUID];
-        const sensor = sensors[accessory.UUID];
+        const additional = additionalAccessories[accessory.UUID];
 
         if (!exists) {
           this.log.info('Remove cached accessory:', accessory.displayName);
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
             accessory,
-            ...(sensor ? [sensor] : [])
+            ...(additional ? additional : [])
           ]);
         }
       } catch (error: any) {
@@ -227,5 +223,74 @@ export default class Platform implements DynamicPlatformPlugin {
         );
       }
     });
+  }
+
+  private loadAdditional(device: VeSyncFan) {
+    const { uuid, name } = device;
+
+    const features = this.config.experimentalFeatures
+      ?.reduce((acc, feature) => ({ ...acc, [feature]: 1 }), {} as Record<ExperimentalFeatures, number>) || {};
+
+    const additionalAccessories = this.cachedAdditional.reduce(
+      (acc, additional) => {
+        const context = (additional.context as VeSyncAdditionalContext);
+        if (context.parent === uuid) {
+          return {
+            ...acc,
+            [context.type]: additional
+          };
+        }
+
+        return acc;
+      }, {} as Record<VeSyncAdditionalType, VeSyncPlatformAccessory | undefined>
+    );
+
+    if (!additionalAccessories[VeSyncAdditionalType.Sensor] && device.deviceType.hasAirQuality) {
+      additionalAccessories[VeSyncAdditionalType.Sensor] = new this.api.platformAccessory<VeSyncAdditionalContext>(
+        `${name} Sensor`,
+        this.api.hap.uuid.generate(`${uuid}-sensor`)
+      );
+
+      additionalAccessories[VeSyncAdditionalType.Sensor].context = {
+        name: `${name} Sensor`,
+        parent: uuid,
+        type: VeSyncAdditionalType.Sensor
+      };
+
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        additionalAccessories[VeSyncAdditionalType.Sensor]
+      ]);
+    } else if (additionalAccessories[VeSyncAdditionalType.Sensor] && !device.deviceType.hasAirQuality) {
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        additionalAccessories[VeSyncAdditionalType.Sensor]
+      ]);
+
+      delete additionalAccessories[VeSyncAdditionalType.Sensor];
+    }
+
+    if (features[ExperimentalFeatures.DeviceDisplay] && !additionalAccessories[VeSyncAdditionalType.Light]) {
+      additionalAccessories[VeSyncAdditionalType.Light] = new this.api.platformAccessory<VeSyncAdditionalContext>(
+        `${name} Display`,
+        this.api.hap.uuid.generate(`${uuid}-light`)
+      );
+
+      additionalAccessories[VeSyncAdditionalType.Light].context = {
+        name: `${name} Display`,
+        parent: uuid,
+        type: VeSyncAdditionalType.Light
+      };
+
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        additionalAccessories[VeSyncAdditionalType.Light]
+      ]);
+    } else if (!features[ExperimentalFeatures.DeviceDisplay] && additionalAccessories[VeSyncAdditionalType.Light]) {
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+        additionalAccessories[VeSyncAdditionalType.Light]
+      ]);
+
+      delete additionalAccessories[VeSyncAdditionalType.Light];
+    }
+
+    return additionalAccessories;
   }
 }

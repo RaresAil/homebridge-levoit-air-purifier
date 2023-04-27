@@ -1,6 +1,11 @@
 {
   "files.eol": "\n",
   "cSpell.words": ["accountid", "appversion"],
+  "editor.defaultFormatter": "vscode.typescript-language-features",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.validate": ["typescript"],
   "eslint.options": {
     "overrideConfig": {
       "rules": {
@@ -9,6 +14,7 @@
         "object-curly-newline": "off",
         "comma-dangle": "off",
         "no-console": "error",
+        "quotes": ["error", "single"],
         "generator-star-spacing": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
