@@ -19,6 +19,7 @@ export enum Mode {
 enum UpdatableFields {
   Power,
   Speed,
+  Lock,
   Mode
 }
 
@@ -106,8 +107,10 @@ export default class VeSyncFan {
   }
 
   public async setChildLock(lock: boolean): Promise<boolean> {
+    const lockFields = this.updateFields[UpdatableFields.Lock];
     const success = await this.client.sendCommand(this, BypassMethod.LOCK, {
-      child_lock: lock
+      [lockFields.key.toString()]: lock,
+      ...(lockFields.extras || {})
     });
 
     if (success) {
@@ -316,6 +319,9 @@ export default class VeSyncFan {
           type: 'wind',
           id: 0
         }
+      },
+      [UpdatableFields.Lock]: {
+        key: 'child_lock',
       }
     },
     [NewGenDevices.Everest]: {
@@ -334,6 +340,9 @@ export default class VeSyncFan {
           type: 'wind',
           id: 0
         }
+      },
+      [UpdatableFields.Lock]: {
+        key: 'childLockSwitch',
       }
     }
   };
