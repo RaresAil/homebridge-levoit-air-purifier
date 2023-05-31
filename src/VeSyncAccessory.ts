@@ -129,10 +129,12 @@ export default class VeSyncAccessory {
         .getCharacteristic(this.platform.Characteristic.CurrentAirPurifierState)
         .onGet(CurrentState.get.bind(this));
 
-      this.airPurifierService
-        .getCharacteristic(this.platform.Characteristic.TargetAirPurifierState)
-        .onGet(TargetState.get.bind(this))
-        .onSet(TargetState.set.bind(this));
+      if (this.device.deviceType.hasAutoMode) {
+        this.airPurifierService
+          .getCharacteristic(this.platform.Characteristic.TargetAirPurifierState)
+          .onGet(TargetState.get.bind(this))
+          .onSet(TargetState.set.bind(this));
+      }
 
       this.airPurifierService
         .getCharacteristic(this.platform.Characteristic.LockPhysicalControls)
