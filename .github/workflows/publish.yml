@@ -50,6 +50,6 @@ jobs:
           node version-check.js
           [ -f .prerelease ] && cat .prerelease >> $GITHUB_ENV
       - name: Publish
-        run: npm publish ${{ env.NPM_EX }}
+        run: npm publish  --provenance --access public ${{ env.NPM_EX }}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

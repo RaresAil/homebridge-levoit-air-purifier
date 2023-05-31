@@ -26,7 +26,7 @@ export default class VeSync {
   private accountId?: string;
   private token?: string;
 
-  private readonly VERSION = '1.2.0';
+  private readonly VERSION = '1.3.1';
   private readonly AGENT = `VeSync/VeSync 3.0.51(F5321;HomeBridge-VeSync ${this.VERSION})`;
   private readonly TIMEZONE = 'America/New_York';
   private readonly OS = 'HomeBridge-VeSync';
@@ -42,7 +42,7 @@ export default class VeSync {
     private readonly password: string,
     public readonly debugMode: DebugMode,
     public readonly log: Logger
-  ) {}
+  ) { }
 
   private generateDetailBody() {
     return {
@@ -59,9 +59,9 @@ export default class VeSync {
       timeZone: this.TIMEZONE,
       ...(includeAuth
         ? {
-            accountID: this.accountId,
-            token: this.token
-          }
+          accountID: this.accountId,
+          token: this.token
+        }
         : {})
     };
   }
