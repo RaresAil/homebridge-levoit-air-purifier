@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType } from './deviceTypes';
+import deviceTypes, { DeviceType, NewGenDevices } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
 
@@ -16,7 +16,26 @@ export enum Mode {
   Auto = 'auto'
 }
 
+enum UpdatableFields {
+  Power,
+  Speed,
+  Lock,
+  Mode
+}
+
+type UpdateFieldsChild = {
+  [key in UpdatableFields]: {
+    key: string;
+    extras?: Record<string, any>;
+  };
+};
+
+type UpdateFields = {
+  [key in NewGenDevices]: UpdateFieldsChild;
+};
+
 export default class VeSyncFan {
+  private readonly updateFields: UpdateFieldsChild;
   private lock: AsyncLock = new AsyncLock();
   public readonly deviceType: DeviceType;
   private lastCheck = 0;
@@ -69,7 +88,7 @@ export default class VeSyncFan {
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
-  constructor (
+  constructor(
     private readonly client: VeSync,
     public readonly name: string,
     private _mode: Mode,
@@ -84,11 +103,14 @@ export default class VeSyncFan {
     public readonly mac: string
   ) {
     this.deviceType = deviceTypes.find(({ isValid }) => isValid(this.model))!;
+    this.updateFields = VeSyncFan.UPDATE_FIELDS[this.deviceType.newGen];
   }
 
   public async setChildLock(lock: boolean): Promise<boolean> {
+    const lockFields = this.updateFields[UpdatableFields.Lock];
     const success = await this.client.sendCommand(this, BypassMethod.LOCK, {
-      child_lock: lock
+      [lockFields.key.toString()]: lock,
+      ...(lockFields.extras || {})
     });
 
     if (success) {
@@ -99,9 +121,11 @@ export default class VeSyncFan {
   }
 
   public async setPower(power: boolean): Promise<boolean> {
+    const powerFields = this.updateFields[UpdatableFields.Power];
+
     const success = await this.client.sendCommand(this, BypassMethod.SWITCH, {
-      enabled: power,
-      id: 0
+      [powerFields.key.toString()]: power,
+      ...(powerFields.extras || {})
     });
 
     if (success) {
@@ -119,8 +143,10 @@ export default class VeSyncFan {
       return false;
     }
 
+    const modeFields = this.updateFields[UpdatableFields.Mode];
     const success = await this.client.sendCommand(this, BypassMethod.MODE, {
-      mode: mode.toString()
+      [modeFields.key.toString()]: mode.toString(),
+      ...(modeFields.extras || {})
     });
 
     if (success) {
@@ -135,10 +161,10 @@ export default class VeSyncFan {
       return false;
     }
 
+    const speedFields = this.updateFields[UpdatableFields.Speed];
     const success = await this.client.sendCommand(this, BypassMethod.SPEED, {
-      level: speed,
-      type: 'wind',
-      id: 0
+      [speedFields.key.toString()]: speed,
+      ...(speedFields.extras || {})
     });
 
     if (success) {
@@ -177,16 +203,14 @@ export default class VeSyncFan {
 
         const result = data?.result?.result;
 
-        this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
-        this._airQualityLevel = this.deviceType.hasAirQuality
-          ? result.air_quality
-          : AirQuality.UNKNOWN;
-        this._filterLife = result.filter_life;
-        this._screenVisible = result.display;
-        this._childLock = result.child_lock;
-        this._isOn = result.enabled;
-        this._speed = result.level;
-        this._mode = result.mode;
+        switch (this.deviceType.newGen) {
+          case NewGenDevices.Everest:
+            this.mapDataN1(result);
+            break;
+          default:
+            this.mapData(result);
+            break;
+        }
       } catch (err: any) {
         this.client.log.error(err?.message);
       }
@@ -220,4 +244,106 @@ export default class VeSyncFan {
           deviceType,
           macID
         );
+
+  public static fromResponseN1 =
+    (client: VeSync) =>
+      ({
+        deviceProp: { powerSwitch, AQLevel, fanSpeedLevel, workMode },
+        deviceName,
+        uuid,
+        configModule,
+        cid,
+        deviceRegion,
+        deviceType,
+        macID
+      }) =>
+        new VeSyncFan(
+          client,
+          deviceName,
+          workMode,
+          fanSpeedLevel ?? 0,
+          uuid,
+          powerSwitch === 1,
+          AQLevel,
+          configModule,
+          cid,
+          deviceRegion,
+          deviceType,
+          macID
+        );
+
+  private mapData(result: any) {
+    this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
+    this._airQualityLevel = this.deviceType.hasAirQuality
+      ? result.air_quality
+      : AirQuality.UNKNOWN;
+    this._filterLife = result.filter_life;
+    this._screenVisible = result.display;
+    this._childLock = result.child_lock;
+    this._isOn = result.enabled;
+    this._speed = result.level;
+    this._mode = result.mode;
+  }
+
+  private mapDataN1(result: any) {
+    this._pm25 = this.deviceType.hasPM25 ? result.PM25 : 0;
+    this._airQualityLevel = this.deviceType.hasAirQuality
+      ? result.air_quality
+      : AirQuality.UNKNOWN;
+    this._filterLife = result.filterLifePercent;
+    this._screenVisible = result.screenSwitch === 1;
+    this._childLock = result.childLockSwitch === 1;
+    this._isOn = result.powerSwitch === 1;
+    this._speed = result.manualSpeedLevel;
+    this._mode = result.workMode;
+
+    if (result.workMode === 'turbo') {
+      this._mode = Mode.Auto;
+    }
+  }
+
+  private static UPDATE_FIELDS: UpdateFields = {
+    [NewGenDevices.None]: {
+      [UpdatableFields.Power]: {
+        key: 'enabled',
+        extras: {
+          id: 0
+        }
+      },
+      [UpdatableFields.Mode]: {
+        key: 'mode',
+      },
+      [UpdatableFields.Speed]: {
+        key: 'level',
+        extras: {
+          type: 'wind',
+          id: 0
+        }
+      },
+      [UpdatableFields.Lock]: {
+        key: 'child_lock',
+      }
+    },
+    [NewGenDevices.Everest]: {
+      [UpdatableFields.Power]: {
+        key: 'powerSwitch',
+        extras: {
+          id: 0
+        }
+      },
+      [UpdatableFields.Mode]: {
+        key: 'workMode',
+      },
+      [UpdatableFields.Speed]: {
+        key: 'fanSpeedLevel',
+        extras: {
+          type: 'wind',
+          id: 0
+        }
+      },
+      [UpdatableFields.Lock]: {
+        key: 'childLockSwitch',
+      }
+    }
+  };
 }
