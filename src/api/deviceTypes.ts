@@ -68,12 +68,12 @@ const deviceTypes: DeviceType[] = [
   },
   {
     isValid: (input: string) => input.includes(DeviceName.Everest),
-    hasAirQuality: false,
-    hasAutoMode: false,
+    hasAirQuality: true,
+    hasAutoMode: true,
     newGen: NewGenDevices.Everest,
     speedMinStep: 25,
     speedLevels: 4,
-    hasPM25: false
+    hasPM25: true
   }
 ];
 
