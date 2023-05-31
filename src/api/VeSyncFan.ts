@@ -16,7 +16,25 @@ export enum Mode {
   Auto = 'auto'
 }
 
+enum UpdatableFields {
+  Power,
+  Speed,
+  Mode
+}
+
+type UpdateFieldsChild = {
+  [key in UpdatableFields]: {
+    key: string;
+    extras?: Record<string, any>;
+  };
+};
+
+type UpdateFields = {
+  [key in NewGenDevices]: UpdateFieldsChild;
+};
+
 export default class VeSyncFan {
+  private readonly updateFields: UpdateFieldsChild;
   private lock: AsyncLock = new AsyncLock();
   public readonly deviceType: DeviceType;
   private lastCheck = 0;
@@ -84,6 +102,7 @@ export default class VeSyncFan {
     public readonly mac: string
   ) {
     this.deviceType = deviceTypes.find(({ isValid }) => isValid(this.model))!;
+    this.updateFields = VeSyncFan.UPDATE_FIELDS[this.deviceType.newGen];
   }
 
   public async setChildLock(lock: boolean): Promise<boolean> {
@@ -99,9 +118,11 @@ export default class VeSyncFan {
   }
 
   public async setPower(power: boolean): Promise<boolean> {
+    const powerFields = this.updateFields[UpdatableFields.Power];
+
     const success = await this.client.sendCommand(this, BypassMethod.SWITCH, {
-      enabled: power,
-      id: 0
+      [powerFields.key.toString()]: power,
+      ...(powerFields.extras || {})
     });
 
     if (success) {
@@ -119,8 +140,10 @@ export default class VeSyncFan {
       return false;
     }
 
+    const modeFields = this.updateFields[UpdatableFields.Mode];
     const success = await this.client.sendCommand(this, BypassMethod.MODE, {
-      mode: mode.toString()
+      [modeFields.key.toString()]: mode.toString(),
+      ...(modeFields.extras || {})
     });
 
     if (success) {
@@ -135,10 +158,10 @@ export default class VeSyncFan {
       return false;
     }
 
+    const speedFields = this.updateFields[UpdatableFields.Speed];
     const success = await this.client.sendCommand(this, BypassMethod.SPEED, {
-      level: speed,
-      type: 'wind',
-      id: 0
+      [speedFields.key.toString()]: speed,
+      ...(speedFields.extras || {})
     });
 
     if (success) {
@@ -275,4 +298,43 @@ export default class VeSyncFan {
       this._mode = Mode.Auto;
     }
   }
+
+  private static UPDATE_FIELDS: UpdateFields = {
+    [NewGenDevices.None]: {
+      [UpdatableFields.Power]: {
+        key: 'enabled',
+        extras: {
+          id: 0
+        }
+      },
+      [UpdatableFields.Mode]: {
+        key: 'mode',
+      },
+      [UpdatableFields.Speed]: {
+        key: 'level',
+        extras: {
+          type: 'wind',
+          id: 0
+        }
+      }
+    },
+    [NewGenDevices.Everest]: {
+      [UpdatableFields.Power]: {
+        key: 'powerSwitch',
+        extras: {
+          id: 0
+        }
+      },
+      [UpdatableFields.Mode]: {
+        key: 'workMode',
+      },
+      [UpdatableFields.Speed]: {
+        key: 'fanSpeedLevel',
+        extras: {
+          type: 'wind',
+          id: 0
+        }
+      }
+    }
+  };
 }
