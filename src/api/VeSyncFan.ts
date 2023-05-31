@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType } from './deviceTypes';
+import deviceTypes, { DeviceType, NewGenDevices } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
 
@@ -177,16 +177,14 @@ export default class VeSyncFan {
 
         const result = data?.result?.result;
 
-        this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
-        this._airQualityLevel = this.deviceType.hasAirQuality
-          ? result.air_quality
-          : AirQuality.UNKNOWN;
-        this._filterLife = result.filter_life;
-        this._screenVisible = result.display;
-        this._childLock = result.child_lock;
-        this._isOn = result.enabled;
-        this._speed = result.level;
-        this._mode = result.mode;
+        switch (this.deviceType.newGen) {
+          case NewGenDevices.Everest:
+            this.mapDataN1(result);
+            break;
+          default:
+            this.mapData(result);
+            break;
+        }
       } catch (err: any) {
         this.client.log.error(err?.message);
       }
@@ -221,7 +219,7 @@ export default class VeSyncFan {
           macID
         );
 
-  public static fromResponseEverest =
+  public static fromResponseN1 =
     (client: VeSync) =>
       ({
         deviceProp: { powerSwitch, AQLevel, fanSpeedLevel, workMode },
@@ -247,4 +245,34 @@ export default class VeSyncFan {
           deviceType,
           macID
         );
+
+  private mapData(result: any) {
+    this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
+    this._airQualityLevel = this.deviceType.hasAirQuality
+      ? result.air_quality
+      : AirQuality.UNKNOWN;
+    this._filterLife = result.filter_life;
+    this._screenVisible = result.display;
+    this._childLock = result.child_lock;
+    this._isOn = result.enabled;
+    this._speed = result.level;
+    this._mode = result.mode;
+  }
+
+  private mapDataN1(result: any) {
+    this._pm25 = this.deviceType.hasPM25 ? result.PM25 : 0;
+    this._airQualityLevel = this.deviceType.hasAirQuality
+      ? result.air_quality
+      : AirQuality.UNKNOWN;
+    this._filterLife = result.filterLifePercent;
+    this._screenVisible = result.screenSwitch === 1;
+    this._childLock = result.childLockSwitch === 1;
+    this._isOn = result.powerSwitch === 1;
+    this._speed = result.manualSpeedLevel;
+    this._mode = result.workMode;
+
+    if (result.workMode === 'turbo') {
+      this._mode = Mode.Auto;
+    }
+  }
 }

@@ -12,6 +12,11 @@ export enum DeviceName {
   Everest = '551S'
 }
 
+export enum NewGenDevices {
+  None,
+  Everest
+}
+
 export interface DeviceType {
   isValid: (input: string) => boolean;
   hasAirQuality: boolean;
@@ -20,7 +25,7 @@ export interface DeviceType {
   speedLevels: number; // With night mode
   hasPM25: boolean;
 
-  isEverest: boolean;
+  newGen: NewGenDevices;
 }
 
 const deviceTypes: DeviceType[] = [
@@ -33,7 +38,7 @@ const deviceTypes: DeviceType[] = [
       input.includes(DeviceName.Core400S),
     hasAirQuality: true,
     hasAutoMode: true,
-    isEverest: false,
+    newGen: NewGenDevices.None,
     speedMinStep: 20,
     speedLevels: 5,
     hasPM25: true
@@ -45,7 +50,7 @@ const deviceTypes: DeviceType[] = [
       input.includes(DeviceName.Core300S),
     hasAirQuality: true,
     hasAutoMode: true,
-    isEverest: false,
+    newGen: NewGenDevices.None,
     speedMinStep: 25,
     speedLevels: 4,
     hasPM25: true
@@ -56,7 +61,7 @@ const deviceTypes: DeviceType[] = [
       input.includes(DeviceName.Core200S),
     hasAirQuality: false,
     hasAutoMode: false,
-    isEverest: false,
+    newGen: NewGenDevices.None,
     speedMinStep: 25,
     speedLevels: 4,
     hasPM25: false
@@ -65,7 +70,7 @@ const deviceTypes: DeviceType[] = [
     isValid: (input: string) => input.includes(DeviceName.Everest),
     hasAirQuality: false,
     hasAutoMode: false,
-    isEverest: true,
+    newGen: NewGenDevices.Everest,
     speedMinStep: 25,
     speedLevels: 4,
     hasPM25: false

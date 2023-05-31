@@ -327,8 +327,8 @@ export default class VeSync {
             return [...acc, VeSyncFan.fromResponse(this)(device)];
           }
 
-          if (deviceTypeInfo?.isEverest && deviceProp) {
-            return [...acc, VeSyncFan.fromResponseEverest(this)(device)];
+          if ((deviceTypeInfo?.newGen || 0) > 0 && deviceProp) {
+            return [...acc, VeSyncFan.fromResponseN1(this)(device)];
           }
 
           return acc;
