@@ -53,7 +53,7 @@ For the experimental features to be activated you need to add them in the config
 ```json
 {
   "name": "Levoit Air Purifiers",
-  "experimentalFeatures": ["DeviceDisplay"]
+  "experimentalFeatures": ["DeviceDisplay", "Humidifiers"]
 }
 ```
 
