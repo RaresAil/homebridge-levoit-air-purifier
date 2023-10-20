@@ -55,6 +55,18 @@ The version 2.x adds support for humidifiers as an experimental feature which by
 **If you have a newer version that is not in this table, then open a issue
 and i will try to add support for it**
 
+#### Features
+
+1. Displaying the humidity level
+2. Target Humidity
+3. Speed option:
+   - 0 -> Off
+   - 1 -> LOW
+   - 2 -> HIGH
+4. Mode change as Swing in home app
+   - Auto (Swing enabled)
+   - Manual (Swing disabled)
+
 ### Experimental Features
 
 For the experimental features to be activated you need to add them in the config file of the platform, e.g.
