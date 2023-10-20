@@ -16,13 +16,13 @@ import DisplayLight from './experimentalCharacteristics/Display';
 
 export type AccessoryThisType = ThisType<{
   airPurifierCurrentCharacteristic?: Characteristic;
-  HomeAirQuality: VeSyncAccessory['HomeAirQuality'];
+  HomeAirQuality: VeSyncPurAccessory['HomeAirQuality'];
   airPurifierService: Service;
   platform: Platform;
   device: VeSyncFan;
 }>;
 
-export default class VeSyncAccessory {
+export default class VeSyncPurAccessory {
   private HomeAirQuality = this.platform.Characteristic.AirQuality;
   private airPurifierCurrentCharacteristic?: Characteristic;
   private airPurifierService?: Service;
@@ -32,7 +32,7 @@ export default class VeSyncAccessory {
   }
 
   private get device() {
-    return (this.accessory.context as VeSyncContext).device;
+    return (this.accessory.context as VeSyncContext).device as VeSyncFan;
   }
 
   constructor(

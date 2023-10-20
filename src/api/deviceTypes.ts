@@ -11,6 +11,12 @@ export enum DeviceName {
   Core200S = '200S'
 }
 
+export enum HumidifierDeviceName {
+  Dual200SLeg = 'Dual200S',
+  Dual200S = 'D301S',
+}
+
+
 export interface DeviceType {
   isValid: (input: string) => boolean;
   hasAirQuality: boolean;
@@ -19,6 +25,8 @@ export interface DeviceType {
   speedLevels: number; // With night mode
   hasPM25: boolean;
 }
+
+export type HumidifierDeviceType = Omit<DeviceType, 'hasPM25' | 'hasAirQuality'> & { isHumidifier: true };
 
 const deviceTypes: DeviceType[] = [
   {
@@ -54,6 +62,18 @@ const deviceTypes: DeviceType[] = [
     speedMinStep: 25,
     speedLevels: 4,
     hasPM25: false
+  },
+];
+
+export const humidifierDeviceTypes: HumidifierDeviceType[] = [
+  {
+    isValid: (input: string) =>
+      input.includes(HumidifierDeviceName.Dual200S) ||
+      input.includes(HumidifierDeviceName.Dual200SLeg),
+    hasAutoMode: true,
+    speedMinStep: 50,
+    speedLevels: 2,
+    isHumidifier: true
   }
 ];
 

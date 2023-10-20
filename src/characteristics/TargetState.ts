@@ -6,7 +6,7 @@ import {
 } from 'homebridge';
 import { Mode } from '../api/VeSyncFan';
 
-import { AccessoryThisType } from '../VeSyncAccessory';
+import { AccessoryThisType } from '../VeSyncPurAccessory';
 
 const characteristic: {
   get: CharacteristicGetHandler;

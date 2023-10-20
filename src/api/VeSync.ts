@@ -3,7 +3,9 @@ import { Logger } from 'homebridge';
 import AsyncLock from 'async-lock';
 import crypto from 'crypto';
 
-import deviceTypes from './deviceTypes';
+import deviceTypes, { humidifierDeviceTypes } from './deviceTypes';
+import VeSyncHumidifier from './VeSyncHumidifier';
+import { VeSyncGeneric } from './VeSyncGeneric';
 import DebugMode from '../debugMode';
 import VeSyncFan from './VeSyncFan';
 
@@ -15,6 +17,16 @@ export enum BypassMethod {
   LOCK = 'setChildLock',
   SWITCH = 'setSwitch',
   SPEED = 'setLevel'
+}
+
+export enum HumidifierBypassMethod {
+  HUMIDITY = 'setTargetHumidity',
+  STATUS = 'getHumidifierStatus',
+  MIST_LEVEL = 'setVirtualLevel',
+  MODE = 'setHumidityMode',
+  DISPLAY = 'setDisplay',
+  SWITCH = 'setSwitch',
+  LEVEL = 'setLevel',
 }
 
 const lock = new AsyncLock();
@@ -66,7 +78,7 @@ export default class VeSync {
     };
   }
 
-  private generateV2Body(fan: VeSyncFan, method: BypassMethod, data = {}) {
+  private generateV2Body(fan: VeSyncGeneric, method: BypassMethod | HumidifierBypassMethod, data = {}) {
     return {
       method: 'bypassV2',
       debugMode: false,
@@ -84,8 +96,8 @@ export default class VeSync {
   }
 
   public async sendCommand(
-    fan: VeSyncFan,
-    method: BypassMethod,
+    fan: VeSyncGeneric,
+    method: BypassMethod | HumidifierBypassMethod,
     body = {}
   ): Promise<boolean> {
     return lock.acquire('api-call', async () => {
@@ -137,7 +149,7 @@ export default class VeSync {
     });
   }
 
-  public async getDeviceInfo(fan: VeSyncFan): Promise<any> {
+  public async getDeviceInfo(fan: VeSyncGeneric, humidifier = false): Promise<any> {
     return lock.acquire('api-call', async () => {
       try {
         if (!this.api) {
@@ -149,7 +161,7 @@ export default class VeSync {
         const response = await this.api.post(
           'cloud/v2/deviceManaged/bypassV2',
           {
-            ...this.generateV2Body(fan, BypassMethod.STATUS),
+            ...this.generateV2Body(fan, humidifier ? HumidifierBypassMethod.STATUS : BypassMethod.STATUS),
             ...this.generateDetailBody(),
             ...this.generateBody(true)
           }
@@ -269,8 +281,11 @@ export default class VeSync {
     });
   }
 
-  public async getDevices(): Promise<VeSyncFan[]> {
-    return lock.acquire('api-call', async () => {
+  public async getDevices() {
+    return lock.acquire<{
+      purifiers: VeSyncFan[];
+      humidifiers: VeSyncHumidifier[];
+    }>('api-call', async () => {
       try {
         if (!this.api) {
           throw new Error('The user is not logged in!');
@@ -291,7 +306,10 @@ export default class VeSync {
             JSON.stringify(response)
           );
 
-          return [];
+          return {
+            purifiers: [],
+            humidifiers: []
+          };
         }
 
         if (!Array.isArray(response.data?.result?.list)) {
@@ -301,7 +319,10 @@ export default class VeSync {
             JSON.stringify(response.data)
           );
 
-          return [];
+          return {
+            purifiers: [],
+            humidifiers: []
+          };
         }
 
         const { list } = response.data.result ?? { list: [] };
@@ -312,7 +333,8 @@ export default class VeSync {
           JSON.stringify(list)
         );
 
-        const devices = list
+
+        const purifiers = list
           .filter(
             ({ deviceType, type, extension }) =>
               !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
@@ -321,12 +343,27 @@ export default class VeSync {
           )
           .map(VeSyncFan.fromResponse(this));
 
+        const humidifiers = list
+          .filter(
+            ({ deviceType, type, extension }) =>
+              !!humidifierDeviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+              type === 'wifi-air' &&
+              !extension
+          )
+          .map(VeSyncHumidifier.fromResponse(this));
+
         await delay(1500);
 
-        return devices;
+        return {
+          purifiers,
+          humidifiers
+        };
       } catch (error: any) {
         this.log.error('Failed to get devices', `Error: ${error?.message}`);
-        return [];
+        return {
+          purifiers: [],
+          humidifiers: []
+        };
       }
     });
   }

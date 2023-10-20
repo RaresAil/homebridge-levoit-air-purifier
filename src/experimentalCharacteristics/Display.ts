@@ -5,7 +5,7 @@ import {
   Nullable
 } from 'homebridge';
 
-import { AccessoryThisType } from '../VeSyncAccessory';
+import { AccessoryThisType } from '../VeSyncPurAccessory';
 import { delay } from '../util';
 
 const characteristic: {

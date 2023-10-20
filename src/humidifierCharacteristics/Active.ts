@@ -5,7 +5,7 @@ import {
   Nullable
 } from 'homebridge';
 
-import { AccessoryThisType } from '../VeSyncPurAccessory';
+import { AccessoryThisType } from '../VeSyncHumAccessory';
 import { delay } from '../util';
 
 const characteristic: {
@@ -14,7 +14,6 @@ const characteristic: {
 } & AccessoryThisType = {
   get: async function (): Promise<Nullable<CharacteristicValue>> {
     await this.device.updateInfo();
-
     return this.device.isOn;
   },
   set: async function (value: CharacteristicValue) {
@@ -30,11 +29,8 @@ const characteristic: {
       await delay(10);
     }
 
-    const { PURIFYING_AIR, INACTIVE } =
-      this.platform.Characteristic.CurrentAirPurifierState;
-
-    this.airPurifierCurrentCharacteristic!.updateValue(
-      boolValue ? PURIFYING_AIR : INACTIVE
+    this.currentStateChar?.updateValue(
+      this.device.currentState,
     );
   }
 };
