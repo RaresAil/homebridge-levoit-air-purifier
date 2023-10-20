@@ -6,15 +6,12 @@ import {
   Nullable
 } from 'homebridge';
 
-import VeSyncFan, { Mode } from '../api/VeSyncFan';
-import { AccessoryThisType } from '../VeSyncPurAccessory';
+import VeSyncHumidifier from '../api/VeSyncHumidifier';
+import { AccessoryThisType } from '../VeSyncHumAccessory';
+import { delay } from '../util';
 
-const calculateSpeed = (device: VeSyncFan) => {
-  let speed = (device.speed + 1) * device.deviceType.speedMinStep;
-  if (device.mode === Mode.Sleep) {
-    speed = device.deviceType.speedMinStep;
-  }
-
+const calculateSpeed = (device: VeSyncHumidifier) => {
+  const speed = (device.speed) * device.deviceType.speedMinStep;
   return device.isOn ? speed : 0;
 };
 
@@ -24,7 +21,6 @@ const characteristic: {
 } & AccessoryThisType = {
   get: async function (): Promise<Nullable<CharacteristicValue>> {
     await this.device.updateInfo();
-
     return calculateSpeed(this.device);
   },
   set: async function (value: CharacteristicValue) {
@@ -32,19 +28,15 @@ const characteristic: {
       this.device.deviceType.speedMinStep
     );
 
-    let lastSpeed = this.device.speed;
-    if (this.device.mode === Mode.Sleep) {
-      lastSpeed = 0;
-    }
-
-    if (realValue.eq(lastSpeed + 1)) {
+    if (realValue.eq(this.device.speed)) {
       return;
     }
 
-    if (realValue.eq(1)) {
-      await this.device.changeMode(Mode.Sleep);
-    } else if (realValue.gt(1)) {
-      await this.device.changeSpeed(realValue.toNumber() - 1);
+    const success = await this.device.setSpeed(realValue.toNumber());
+
+    if (success && this.modeChar) {
+      await delay(10);
+      this.modeChar.updateValue(0);
     }
   }
 };

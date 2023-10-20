@@ -9,7 +9,9 @@ import {
 } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import VeSyncAccessory from './VeSyncAccessory';
+import VeSyncPurAccessory from './VeSyncPurAccessory';
+import VeSyncHumAccessory from './VeSyncHumAccessory';
+import VeSyncHumidifier from './api/VeSyncHumidifier';
 import { ExperimentalFeatures } from './types';
 import VeSyncFan from './api/VeSyncFan';
 import DebugMode from './debugMode';
@@ -17,7 +19,7 @@ import VeSync from './api/VeSync';
 
 export interface VeSyncContext {
   name: string;
-  device: VeSyncFan;
+  device: VeSyncFan | VeSyncHumidifier;
 }
 
 export enum VeSyncAdditionalType {
@@ -47,14 +49,14 @@ export default class Platform implements DynamicPlatformPlugin {
   public readonly Characteristic: typeof Characteristic =
     this.api.hap.Characteristic;
 
+  public readonly registeredDevices: (VeSyncPurAccessory | VeSyncHumAccessory)[] = [];
   public readonly cachedAccessories: VeSyncPlatformAccessory[] = [];
   public readonly cachedAdditional: VeSyncPlatformAccessory[] = [];
-  public readonly registeredDevices: VeSyncAccessory[] = [];
 
   public readonly debugger: DebugMode;
   private readonly client?: VeSync;
 
-  constructor (
+  constructor(
     public readonly log: Logger,
     public readonly config: Config,
     public readonly api: API
@@ -125,8 +127,15 @@ export default class Platform implements DynamicPlatformPlugin {
 
       this.log.info('Discovering devices...');
 
-      const devices = await this.client.getDevices();
-      await Promise.all(devices.map(this.loadDevice.bind(this)));
+      const { purifiers, humidifiers } = await this.client.getDevices();
+
+      const experimentalFeatures = this.config?.experimentalFeatures || [];
+
+      await Promise.all(purifiers.map(this.loadDevice.bind(this)));
+
+      if (experimentalFeatures.includes(ExperimentalFeatures.Humidifiers)) {
+        await Promise.all(humidifiers.map(this.loadDevice.bind(this)));
+      }
 
       this.checkOldDevices();
     } catch (error: any) {
@@ -134,7 +143,7 @@ export default class Platform implements DynamicPlatformPlugin {
     }
   }
 
-  private async loadDevice(device: VeSyncFan) {
+  private async loadDevice(device: VeSyncFan | VeSyncHumidifier) {
     try {
       await device.updateInfo();
       const { uuid, name } = device;
@@ -143,7 +152,7 @@ export default class Platform implements DynamicPlatformPlugin {
         (accessory) => accessory.UUID === uuid
       );
 
-      const additional = this.loadAdditional(device);
+      const additional = device instanceof VeSyncFan ? this.loadAdditional(device) : {} as Record<VeSyncAdditionalType, VeSyncPlatformAccessory | undefined>;
 
       if (existingAccessory) {
         this.log.info(
@@ -156,9 +165,15 @@ export default class Platform implements DynamicPlatformPlugin {
           device
         };
 
-        this.registeredDevices.push(
-          new VeSyncAccessory(this, existingAccessory, additional)
-        );
+        if (device instanceof VeSyncFan) {
+          this.registeredDevices.push(
+            new VeSyncPurAccessory(this, existingAccessory, additional)
+          );
+        } else if (device instanceof VeSyncHumidifier) {
+          this.registeredDevices.push(
+            new VeSyncHumAccessory(this, existingAccessory)
+          );
+        }
 
         return;
       }
@@ -173,7 +188,16 @@ export default class Platform implements DynamicPlatformPlugin {
         device
       };
 
-      this.registeredDevices.push(new VeSyncAccessory(this, accessory, additional));
+      if (device instanceof VeSyncFan) {
+        this.registeredDevices.push(
+          new VeSyncPurAccessory(this, accessory, additional)
+        );
+      } else if (device instanceof VeSyncHumidifier) {
+        this.registeredDevices.push(
+          new VeSyncHumAccessory(this, accessory)
+        );
+      }
+
       return this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
         accessory
       ]);

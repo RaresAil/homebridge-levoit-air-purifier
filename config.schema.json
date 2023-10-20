@@ -30,7 +30,7 @@
         "items": {
           "title": "Feature",
           "type": "string",
-          "enum": ["DeviceDisplay"]
+          "enum": ["DeviceDisplay", "Humidifiers"]
         }
       }
     }

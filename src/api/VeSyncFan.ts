@@ -2,6 +2,7 @@ import AsyncLock from 'async-lock';
 import deviceTypes, { DeviceType } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
+import { VeSyncGeneric } from './VeSyncGeneric';
 
 export enum AirQuality {
   VERY_GOOD = 1,
@@ -16,7 +17,7 @@ export enum Mode {
   Auto = 'auto'
 }
 
-export default class VeSyncFan {
+export default class VeSyncFan implements VeSyncGeneric {
   private lock: AsyncLock = new AsyncLock();
   public readonly deviceType: DeviceType;
   private lastCheck = 0;
@@ -69,7 +70,7 @@ export default class VeSyncFan {
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
-  constructor (
+  constructor(
     private readonly client: VeSync,
     public readonly name: string,
     private _mode: Mode,

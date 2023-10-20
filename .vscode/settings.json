@@ -1,6 +1,10 @@
 {
   "files.eol": "\n",
-  "cSpell.words": ["accountid", "appversion"],
+  "cSpell.words": [
+    "accountid",
+    "appversion",
+    "Levoit"
+  ],
   "editor.defaultFormatter": "vscode.typescript-language-features",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
