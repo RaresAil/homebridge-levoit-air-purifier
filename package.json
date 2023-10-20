@@ -47,6 +47,9 @@
     "axios": "^1.5.1",
     "big.js": "^6.2.1"
   },
+  "resolutions": {
+    "semver": "^7.5.2"
+  },
   "keywords": [
     "homebridge-plugin",
     "air-purifier",
