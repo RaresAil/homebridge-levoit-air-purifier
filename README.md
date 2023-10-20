@@ -8,7 +8,7 @@
 
 # Homebridge Levoit Air Purifier
 
-This is a Homebridge plugin to control Levoit Air Purifiers with via the VeSync Platform.
+This is a Homebridge plugin to control Levoit Air Purifiers/Humidifiers with via the VeSync Platform.
 
 | Supported Versions | Tested |
 | ------------------ | ------ |
@@ -24,13 +24,9 @@ This is a Homebridge plugin to control Levoit Air Purifiers with via the VeSync 
 **If you have a newer version that is not in this table, then open a issue
 and i will try to add support for it**
 
-This plugin uses similar API calls as
-[homebridge-levoitcore-client](https://github.com/tushardhadiwal/homebridge-levoitcore-client) but with differences on API implementation
-and extra features.
-
 Any device from VeSync that is not listed in the supported versions are automatically skipped when discovering devices.
 
-### Features
+### Features for Purifiers
 
 1. Displaying the air quality (the same display as the one on the physical device) (Not for 200S)
 2. Display the PM2.5 Density value in Home App shown in µg/m^3 (Not for 200S)
@@ -47,9 +43,22 @@ Any device from VeSync that is not listed in the supported versions are automati
    - Auto
    - Manual
 
+### Humidifiers (Experimental Feature)
+
+The version 2.x adds support for humidifiers as an experimental feature which by default is disabled, the devices and features are limited for this devices for now
+
+| Supported Versions | Tested |
+| ------------------ | ------ |
+| Dual 200S          | ✅     |
+| Other versions     | ❌     |
+
+**If you have a newer version that is not in this table, then open a issue
+and i will try to add support for it**
+
 ### Experimental Features
 
 For the experimental features to be activated you need to add them in the config file of the platform, e.g.
+
 ```json
 {
   "name": "Levoit Air Purifiers",
@@ -57,12 +66,16 @@ For the experimental features to be activated you need to add them in the config
 }
 ```
 
+---
+
 1. Show the display's switch as a light in the app (`DeviceDisplay`)
 
 The read data is cached for 5 seconds to not trigger the rate limiter for the API.
 Each request is delayed by 500ms to not trigger the rate limiter if a huge number of requests are sent.
 
 The timers are not included because you can accomplish similar results by using Home App's Automatization or the Shortcuts app
+
+2. Discovers supported humidifiers (`Humidifiers`)
 
 ### Configuration
 
