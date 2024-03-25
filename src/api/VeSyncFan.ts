@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType } from './deviceTypes';
+import deviceTypes, { DeviceType, DeviceCategory } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
 import { VeSyncGeneric } from './VeSyncGeneric';
@@ -20,6 +20,7 @@ export enum Mode {
 export default class VeSyncFan implements VeSyncGeneric {
   private lock: AsyncLock = new AsyncLock();
   public readonly deviceType: DeviceType;
+  public readonly deviceCategory: DeviceCategory;
   private lastCheck = 0;
 
   private _screenVisible = true;
@@ -85,12 +86,16 @@ export default class VeSyncFan implements VeSyncGeneric {
     public readonly mac: string
   ) {
     this.deviceType = deviceTypes.find(({ isValid }) => isValid(this.model))!;
+    this.deviceCategory = this.model.includes('V') ? 'Vital' : 'Core';
   }
 
   public async setChildLock(lock: boolean): Promise<boolean> {
-    const success = await this.client.sendCommand(this, BypassMethod.LOCK, {
-      child_lock: lock
-    });
+    const data = this.deviceCategory === 'Vital' ? {
+      childLockSwitch: lock ? 1 : 0
+    } : {
+      child_lock: lock,
+    };
+    const success = await this.client.sendCommand(this, BypassMethod.LOCK, data);
 
     if (success) {
       this._childLock = lock;
@@ -100,10 +105,14 @@ export default class VeSyncFan implements VeSyncGeneric {
   }
 
   public async setPower(power: boolean): Promise<boolean> {
-    const success = await this.client.sendCommand(this, BypassMethod.SWITCH, {
-      enabled: power,
+    const data = this.deviceCategory === 'Vital' ? {
+      powerSwitch: power ? 1 : 0,
+      switchIdx: 0
+    } : {
+      switch: power,
       id: 0
-    });
+    };
+    const success = await this.client.sendCommand(this, BypassMethod.SWITCH, data);
 
     if (success) {
       this._isOn = power;
@@ -120,9 +129,12 @@ export default class VeSyncFan implements VeSyncGeneric {
       return false;
     }
 
-    const success = await this.client.sendCommand(this, BypassMethod.MODE, {
+    const data = this.deviceCategory === 'Vital' ? {
+      workMode: mode.toString()
+    } : {
       mode: mode.toString()
-    });
+    };
+    const success = await this.client.sendCommand(this, BypassMethod.MODE, data);
 
     if (success) {
       this._mode = mode;
@@ -136,11 +148,17 @@ export default class VeSyncFan implements VeSyncGeneric {
       return false;
     }
 
-    const success = await this.client.sendCommand(this, BypassMethod.SPEED, {
+    const data = this.deviceCategory === 'Vital' ? {
+      manualSpeedLevel: speed,
+      switchIdx: 0,
+      type: 'wind'
+    } : {
       level: speed,
       type: 'wind',
       id: 0
-    });
+    };
+
+    const success = await this.client.sendCommand(this, BypassMethod.SPEED, data);
 
     if (success) {
       this._speed = speed;
@@ -150,10 +168,14 @@ export default class VeSyncFan implements VeSyncGeneric {
   }
 
   public async setDisplay(display: boolean): Promise<boolean> {
-    const success = await this.client.sendCommand(this, BypassMethod.DISPLAY, {
+    const data = this.deviceCategory === 'Vital' ? {
+      screenSwitch: display ? 1 : 0
+    } : {
       state: display,
       id: 0
-    });
+    };
+
+    const success = await this.client.sendCommand(this, BypassMethod.DISPLAY, data);
 
     if (success) {
       this._screenVisible = display;
@@ -178,16 +200,16 @@ export default class VeSyncFan implements VeSyncGeneric {
 
         const result = data?.result?.result;
 
-        this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value : 0;
+        this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value || result.PM25 : 0;
         this._airQualityLevel = this.deviceType.hasAirQuality
-          ? result.air_quality
+          ? result.air_quality || result.AQLevel
           : AirQuality.UNKNOWN;
-        this._filterLife = result.filter_life;
-        this._screenVisible = result.display;
-        this._childLock = result.child_lock;
-        this._isOn = result.enabled;
-        this._speed = result.level;
-        this._mode = result.mode;
+        this._filterLife = result.filter_life || result.filterLifePercent;
+        this._screenVisible = result.display || result.screenSwitch;
+        this._childLock = result.child_lock || result.childLockSwitch;
+        this._isOn = result.enabled || result.powerSwitch;
+        this._speed = result.level || result.fanSpeedLevel;
+        this._mode = result.mode || result.workMode;
       } catch (err: any) {
         this.client.log.error(err?.message);
       }

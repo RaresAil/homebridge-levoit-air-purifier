@@ -334,7 +334,7 @@ export default class VeSync {
         );
 
 
-        const purifiers = list
+        let purifiers = list
           .filter(
             ({ deviceType, type, extension }) =>
               !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
@@ -342,6 +342,17 @@ export default class VeSync {
               !!extension?.fanSpeedLevel
           )
           .map(VeSyncFan.fromResponse(this));
+
+          // Newer Vital purifiers
+          purifiers = purifiers.concat(list
+          .filter(
+            ({ deviceType, type, deviceProp }) =>
+              !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+              type === 'wifi-air' &&
+              !!deviceProp
+          )
+          .map((fan: any) => ({ ...fan, extension: { ...fan.deviceProp, airQualityLevel: fan.deviceProp.AQLevel, mode: fan.deviceProp.workMode } }))
+          .map(VeSyncFan.fromResponse(this)));
 
         const humidifiers = list
           .filter(
