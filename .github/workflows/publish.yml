@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js 18.0
+      - name: Use Node.js 20.0
         uses: actions/setup-node@v3
         with:
-          node-version: 18.0
+          node-version: 20.0
           cache: "npm"
       - name: Install dependencies
         run: npm install
@@ -35,10 +35,10 @@ jobs:
       name: NPM
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js 18.0
+      - name: Use Node.js 20.0
         uses: actions/setup-node@v3
         with:
-          node-version: 18.0
+          node-version: 20.0
           cache: "npm"
           registry-url: https://registry.npmjs.org/
       - name: Install dependencies
