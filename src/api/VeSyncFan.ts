@@ -109,7 +109,7 @@ export default class VeSyncFan implements VeSyncGeneric {
       powerSwitch: power ? 1 : 0,
       switchIdx: 0
     } : {
-      switch: power,
+      enabled: power,
       id: 0
     };
     const success = await this.client.sendCommand(this, BypassMethod.SWITCH, data);
