@@ -43,9 +43,15 @@ Model numbers may vary by region, so not being too restrictive, but simply check
 not done in a certain order. For example, checking for Core201S before Vital200S would falsely identify a Vital200S as a
 Core201S as seen with https://github.com/RaresAil/homebridge-levoit-air-purifier/issues/100/. Furthermore, a word
 boundary is used instead of a hyphen (-) to handle the case where the name is 1:1 with the model.
+
+Finally, some firmware versions may broadcast a C prefix for the Core line air purifiers. The modern names are used in
+the enum above, but handle this as an optional case to maximize compatibility. This is only applied for enum values that
+do not start with a letter (i.e. already have a well-defined prefix).
 */
-const isModelMatch = (model: string, ...names: (DeviceName | HumidifierDeviceName)[]) =>
-  new RegExp(`\\b(${names.join("|")})\\b`).test(model);
+const isModelMatch = (model: string, ...names: (DeviceName | HumidifierDeviceName)[]) => {
+  const namePatterns = names.map(name => isNaN(parseInt(name.charAt(0), 10)) ? name : `C?${name}`);
+  return new RegExp(`\\b(${namePatterns.join("|")})\\b`).test(model);
+}
 
 const deviceTypes: DeviceType[] = [
   {
