@@ -59,7 +59,7 @@ const deviceTypes: DeviceType[] = [
   },
   {
     isValid: (input: string) =>
-      input.includes(DeviceName.Core201S) ||
+      (input.includes(DeviceName.Core201S) && !input.includes(DeviceName.Vital200S)) ||
       input.includes(DeviceName.Core200S),
     hasAirQuality: false,
     hasAutoMode: false,
