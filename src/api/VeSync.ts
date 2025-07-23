@@ -45,13 +45,14 @@ export default class VeSync {
   private readonly LANG = 'en';
 
   private readonly AXIOS_OPTIONS = {
-    baseURL: 'https://smartapi.vesync.com',
+    baseURL: 'https://smartapi.vesync.'.concat(this.region),
     timeout: 30000
   };
 
   constructor(
     private readonly email: string,
     private readonly password: string,
+    private readonly region: string,
     public readonly debugMode: DebugMode,
     public readonly log: Logger
   ) { }

@@ -23,6 +23,12 @@
         "required": true,
         "description": "VeSync's account password"
       },
+      "region": {
+        "title": "Region",
+        "type": "string",
+        "required": false,
+        "description": "The region you have registered your account in."
+      },
       "experimentalFeatures": {
         "title": "Experimental Features",
         "type": "array",
