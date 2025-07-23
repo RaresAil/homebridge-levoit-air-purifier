@@ -93,6 +93,7 @@ The timers are not included because you can accomplish similar results by using 
 
 - Via the Homebridge UI, enter the Homebridge VeSync Client plugin settings.
 - Enter your VeSync app credentials.
+- Optionally enter a region. This will be the top level domain (TLD) for the VeSync API. Default ist "com". EU users must use "eu".
 - Setup the platform plugin as a child bridge for better performance
 - Save and restart Homebridge.
 
