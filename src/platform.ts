@@ -42,7 +42,7 @@ export interface Config extends PlatformConfig {
   enableDebugMode?: boolean;
   password: string;
   email: string;
-  region: string;
+  region?: string;
 }
 
 export default class Platform implements DynamicPlatformPlugin {
