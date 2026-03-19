@@ -1,8 +1,8 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType, DeviceCategory } from './deviceTypes';
+import deviceTypes, { DeviceType, DeviceCategory } from './deviceTypes.js';
 
-import VeSync, { BypassMethod } from './VeSync';
-import { VeSyncGeneric } from './VeSyncGeneric';
+import VeSync, { BypassMethod } from './VeSync.js';
+import { VeSyncGeneric } from './VeSyncGeneric.js';
 
 export enum AirQuality {
   VERY_GOOD = 1,

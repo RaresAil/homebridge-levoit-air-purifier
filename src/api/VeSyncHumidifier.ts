@@ -1,8 +1,8 @@
 import AsyncLock from 'async-lock';
 
-import { HumidifierDeviceType, humidifierDeviceTypes } from './deviceTypes';
-import VeSync, { HumidifierBypassMethod } from './VeSync';
-import { VeSyncGeneric } from './VeSyncGeneric';
+import { HumidifierDeviceType, humidifierDeviceTypes } from './deviceTypes.js';
+import VeSync, { HumidifierBypassMethod } from './VeSync.js';
+import { VeSyncGeneric } from './VeSyncGeneric.js';
 
 export enum AirQuality {
     VERY_GOOD = 1,

@@ -1,12 +1,12 @@
-import {
+import type {
   CharacteristicGetHandler,
   CharacteristicSetHandler,
   CharacteristicValue,
   Nullable
 } from 'homebridge';
 
-import { AccessoryThisType } from '../VeSyncHumAccessory';
-import { delay } from '../util';
+import type { AccessoryThisType } from '../VeSyncHumAccessory.js';
+import { delay } from '../util.js';
 
 const characteristic: {
   get: CharacteristicGetHandler;

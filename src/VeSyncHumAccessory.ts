@@ -1,14 +1,14 @@
-import { Characteristic, Service } from 'homebridge';
+import type { Characteristic, Service } from 'homebridge';
 
-import Platform, { VeSyncContext, VeSyncPlatformAccessory } from './platform';
-import VeSyncHumidifier from './api/VeSyncHumidifier';
+import Platform, { VeSyncContext, VeSyncPlatformAccessory } from './platform.js';
+import VeSyncHumidifier from './api/VeSyncHumidifier.js';
 
-import RelativeHumidityHumidifierThreshold from './humidifierCharacteristics/RelativeHumidityHumidifierThreshold';
-import CurrentHumidifierDehumidifierState from './humidifierCharacteristics/CurrentHumidifierDehumidifierState';
-import CurrentRelativeHumidity from './humidifierCharacteristics/CurrentRelativeHumidity';
-import RotationSpeed from './humidifierCharacteristics/RotationSpeed';
-import AutoMode from './humidifierCharacteristics/AutoMode';
-import Active from './humidifierCharacteristics/Active';
+import RelativeHumidityHumidifierThreshold from './humidifierCharacteristics/RelativeHumidityHumidifierThreshold.js';
+import CurrentHumidifierDehumidifierState from './humidifierCharacteristics/CurrentHumidifierDehumidifierState.js';
+import CurrentRelativeHumidity from './humidifierCharacteristics/CurrentRelativeHumidity.js';
+import RotationSpeed from './humidifierCharacteristics/RotationSpeed.js';
+import AutoMode from './humidifierCharacteristics/AutoMode.js';
+import Active from './humidifierCharacteristics/Active.js';
 
 export type AccessoryThisType = ThisType<{
   currentStateChar?: Characteristic;

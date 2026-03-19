@@ -1,13 +1,13 @@
 import Big from 'big.js';
-import {
+import type {
   CharacteristicGetHandler,
   CharacteristicSetHandler,
   CharacteristicValue,
   Nullable
 } from 'homebridge';
 
-import VeSyncFan, { Mode } from '../api/VeSyncFan';
-import { AccessoryThisType } from '../VeSyncPurAccessory';
+import VeSyncFan, { Mode } from '../api/VeSyncFan.js';
+import type { AccessoryThisType } from '../VeSyncPurAccessory.js';
 
 const calculateSpeed = (device: VeSyncFan) => {
   let speed = (device.speed + 1) * device.deviceType.speedMinStep;

@@ -1,4 +1,4 @@
-import {
+import type {
   DynamicPlatformPlugin,
   PlatformAccessory,
   PlatformConfig,
@@ -8,14 +8,14 @@ import {
   API
 } from 'homebridge';
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import VeSyncPurAccessory from './VeSyncPurAccessory';
-import VeSyncHumAccessory from './VeSyncHumAccessory';
-import VeSyncHumidifier from './api/VeSyncHumidifier';
-import { ExperimentalFeatures } from './types';
-import VeSyncFan from './api/VeSyncFan';
-import DebugMode from './debugMode';
-import VeSync from './api/VeSync';
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
+import VeSyncPurAccessory from './VeSyncPurAccessory.js';
+import VeSyncHumAccessory from './VeSyncHumAccessory.js';
+import VeSyncHumidifier from './api/VeSyncHumidifier.js';
+import { ExperimentalFeatures } from './types.js';
+import VeSyncFan from './api/VeSyncFan.js';
+import DebugMode from './debugMode.js';
+import VeSync from './api/VeSync.js';
 
 export interface VeSyncContext {
   name: string;
@@ -45,10 +45,6 @@ export interface Config extends PlatformConfig {
 }
 
 export default class Platform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic =
-    this.api.hap.Characteristic;
-
   public readonly registeredDevices: (VeSyncPurAccessory | VeSyncHumAccessory)[] = [];
   public readonly cachedAccessories: VeSyncPlatformAccessory[] = [];
   public readonly cachedAdditional: VeSyncPlatformAccessory[] = [];
@@ -83,15 +79,24 @@ export default class Platform implements DynamicPlatformPlugin {
     }
   }
 
-  configureAccessory(accessory: VeSyncPlatformAccessory) {
-    const additional = (accessory.context as VeSyncAdditionalContext);
+  public get Service(): typeof Service {
+    return this.api.hap.Service;
+  }
+
+  public get Characteristic(): typeof Characteristic {
+    return this.api.hap.Characteristic;
+  }
+
+  configureAccessory(accessory: PlatformAccessory) {
+    const platformAccessory = accessory as VeSyncPlatformAccessory;
+    const additional = (platformAccessory.context as VeSyncAdditionalContext);
     if (additional.parent) {
-      this.cachedAdditional.push(accessory);
+      this.cachedAdditional.push(platformAccessory);
       return;
     }
 
-    this.log.info('Loading accessory from cache:', accessory.displayName);
-    this.cachedAccessories.push(accessory);
+    this.log.info('Loading accessory from cache:', platformAccessory.displayName);
+    this.cachedAccessories.push(platformAccessory);
   }
 
   private cleanAccessories() {

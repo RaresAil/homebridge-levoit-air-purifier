@@ -10,6 +10,20 @@
 
 This is a Homebridge plugin to control Levoit Air Purifiers/Humidifiers with via the VeSync Platform.
 
+## Homebridge 2 Beta Status
+
+This branch has been updated to work with Homebridge `^2.0.0-beta.0`.
+It should be treated as a Homebridge 2 candidate release line and not as a Homebridge 1.x-compatible build.
+
+Current status:
+
+- Build and type-check pass against Homebridge 2 beta.
+- Live VeSync login and device discovery were verified against Homebridge 2 beta.
+- Child bridge mode works in live testing.
+- Main bridge mode is currently blocked by what appears to be an upstream Homebridge beta issue where dynamic platform accessories are handled twice and fail with `Tried to bridge <accessory> while it was already bridged by <bridge>`.
+
+Until that upstream beta issue is resolved, use this plugin as a child bridge on Homebridge 2 beta.
+
 | Supported Versions | Tested |
 | ------------------ | ------ |
 | Core 600S          | ✅     |
@@ -93,7 +107,8 @@ The timers are not included because you can accomplish similar results by using 
 
 - Via the Homebridge UI, enter the Homebridge VeSync Client plugin settings.
 - Enter your VeSync app credentials.
-- Setup the platform plugin as a child bridge for better performance
+- Setup the platform plugin as a child bridge.
+- On Homebridge 2 beta, child bridge mode is currently recommended.
 - Save and restart Homebridge.
 
 This plugin requires your VeSync credentials as it communicates with the VeSync devices via VeSync's own API. Your credentials are only stored in the Homebridge config and not sent to any server except VeSync's.
@@ -108,7 +123,13 @@ You can also do this directly via the homebridge config by adding your credentia
       "email": "email",
       "password": "password",
       "platform": "LevoitAirPurifiers",
-      "experimentalFeatures": []
+      "experimentalFeatures": [],
+      "_bridge": {
+        "name": "Levoit Child Bridge",
+        "username": "0E:57:DA:14:10:04",
+        "port": 51845,
+        "pin": "031-45-154"
+      }
     }
   ]
 }
@@ -137,11 +158,11 @@ In the config file, add `enableDebugMode: true`
 To setup the local project clone the files and inside the root directory of the project run:
 
 ```
-yarn install
+npm install
 ```
 
 After that to start the local server use
 
 ```
-yarn watch
+npm run watch
 ```

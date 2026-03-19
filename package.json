@@ -2,9 +2,11 @@
   "description": "Made for Core 200S/300S/400S/400S Pro/600S",
   "name": "homebridge-levoit-air-purifier",
   "displayName": "Levoit Air Purifier",
+  "packageManager": "npm@10.9.2",
+  "type": "module",
   "main": "dist/index.js",
   "license": "Apache-2.0",
-  "version": "3.1.1",
+  "version": "4.0.0-beta.0",
   "private": false,
   "bugs": {
     "url": "https://github.com/RaresAil/homebridge-levoit-air-purifier/issues"
@@ -21,7 +23,7 @@
     "remove-link": "npm -g remove homebridge-levoit-air-purifier",
     "prepublishOnly": "npm run lint && npm run build",
     "watch": "npm run build && npm link && nodemon",
-    "lint": "eslint src/**.ts --max-warnings=0",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint \"src/**/*.ts\" --max-warnings=0",
     "build": "rimraf ./dist && tsc",
     "start": "npm run build && nodemon"
   },
@@ -32,15 +34,15 @@
     "@typescript-eslint/eslint-plugin": "^7.6.0",
     "@typescript-eslint/parser": "^7.6.0",
     "eslint": "^8.56.0",
-    "homebridge": "^1.7.0",
+    "homebridge": "^2.0.0-beta.0",
     "nodemon": "^3.1.0",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   },
   "engines": {
-    "homebridge": ">=1.3.5 || ^2.0.0-beta.0",
-    "node": ">=16"
+    "homebridge": "^2.0.0-beta.0",
+    "node": "^22 || ^24"
   },
   "dependencies": {
     "async-lock": "^1.4.1",

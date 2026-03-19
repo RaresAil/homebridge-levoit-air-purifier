@@ -1,12 +1,12 @@
-import {
+import type {
     CharacteristicGetHandler,
     CharacteristicSetHandler,
     CharacteristicValue,
     Nullable
 } from 'homebridge';
 
-import { AccessoryThisType } from '../VeSyncHumAccessory';
-import { Mode } from '../api/VeSyncHumidifier';
+import type { AccessoryThisType } from '../VeSyncHumAccessory.js';
+import { Mode } from '../api/VeSyncHumidifier.js';
 
 const characteristic: {
     get: CharacteristicGetHandler;

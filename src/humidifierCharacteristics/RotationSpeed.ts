@@ -1,14 +1,14 @@
 import Big from 'big.js';
-import {
+import type {
   CharacteristicGetHandler,
   CharacteristicSetHandler,
   CharacteristicValue,
   Nullable
 } from 'homebridge';
 
-import VeSyncHumidifier from '../api/VeSyncHumidifier';
-import { AccessoryThisType } from '../VeSyncHumAccessory';
-import { delay } from '../util';
+import VeSyncHumidifier from '../api/VeSyncHumidifier.js';
+import type { AccessoryThisType } from '../VeSyncHumAccessory.js';
+import { delay } from '../util.js';
 
 const calculateSpeed = (device: VeSyncHumidifier) => {
   const speed = (device.speed) * device.deviceType.speedMinStep;

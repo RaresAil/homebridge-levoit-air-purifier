@@ -1,13 +1,13 @@
 import axios, { AxiosInstance } from 'axios';
-import { Logger } from 'homebridge';
+import type { Logger } from 'homebridge';
 import AsyncLock from 'async-lock';
 import crypto from 'crypto';
 
-import deviceTypes, { humidifierDeviceTypes } from './deviceTypes';
-import VeSyncHumidifier from './VeSyncHumidifier';
-import { VeSyncGeneric } from './VeSyncGeneric';
-import DebugMode from '../debugMode';
-import VeSyncFan from './VeSyncFan';
+import deviceTypes, { humidifierDeviceTypes } from './deviceTypes.js';
+import VeSyncHumidifier from './VeSyncHumidifier.js';
+import { VeSyncGeneric } from './VeSyncGeneric.js';
+import DebugMode from '../debugMode.js';
+import VeSyncFan from './VeSyncFan.js';
 
 export enum BypassMethod {
   STATUS = 'getPurifierStatus',
@@ -32,6 +32,19 @@ export enum HumidifierBypassMethod {
 const lock = new AsyncLock();
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const uniqueBy = <T>(items: T[], getKey: (item: T) => string) => {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = getKey(item);
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
 
 export default class VeSync {
   private api?: AxiosInstance;
@@ -366,8 +379,8 @@ export default class VeSync {
         await delay(1500);
 
         return {
-          purifiers,
-          humidifiers
+          purifiers: uniqueBy<VeSyncFan>(purifiers, (item) => item.uuid),
+          humidifiers: uniqueBy<VeSyncHumidifier>(humidifiers, (item) => item.uuid)
         };
       } catch (error: any) {
         this.log.error('Failed to get devices', `Error: ${error?.message}`);

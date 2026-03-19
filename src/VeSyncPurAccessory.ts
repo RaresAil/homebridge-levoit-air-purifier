@@ -1,18 +1,18 @@
-import { Characteristic, Service } from 'homebridge';
+import type { Characteristic, Service } from 'homebridge';
 
-import Platform, { VeSyncAdditionalType, VeSyncContext, VeSyncPlatformAccessory } from './platform';
-import FilterChangeIndication from './characteristics/FilterChangeIndication';
-import LockPhysicalControls from './characteristics/LockPhysicalControls';
-import FilterLifeLevel from './characteristics/FilterLifeLevel';
-import RotationSpeed from './characteristics/RotationSpeed';
-import CurrentState from './characteristics/CurrentState';
-import PM25Density from './characteristics/PM25Density';
-import TargetState from './characteristics/TargetState';
-import AirQuality from './characteristics/AirQuality';
-import Active from './characteristics/Active';
-import VeSyncFan from './api/VeSyncFan';
+import Platform, { VeSyncAdditionalType, VeSyncContext, VeSyncPlatformAccessory } from './platform.js';
+import FilterChangeIndication from './characteristics/FilterChangeIndication.js';
+import LockPhysicalControls from './characteristics/LockPhysicalControls.js';
+import FilterLifeLevel from './characteristics/FilterLifeLevel.js';
+import RotationSpeed from './characteristics/RotationSpeed.js';
+import CurrentState from './characteristics/CurrentState.js';
+import PM25Density from './characteristics/PM25Density.js';
+import TargetState from './characteristics/TargetState.js';
+import AirQuality from './characteristics/AirQuality.js';
+import Active from './characteristics/Active.js';
+import VeSyncFan from './api/VeSyncFan.js';
 
-import DisplayLight from './experimentalCharacteristics/Display';
+import DisplayLight from './experimentalCharacteristics/Display.js';
 
 export type AccessoryThisType = ThisType<{
   airPurifierCurrentCharacteristic?: Characteristic;
@@ -23,9 +23,12 @@ export type AccessoryThisType = ThisType<{
 }>;
 
 export default class VeSyncPurAccessory {
-  private HomeAirQuality = this.platform.Characteristic.AirQuality;
   private airPurifierCurrentCharacteristic?: Characteristic;
   private airPurifierService?: Service;
+
+  private get HomeAirQuality() {
+    return this.platform.Characteristic.AirQuality;
+  }
 
   public get UUID() {
     return this.device.uuid.toString();
