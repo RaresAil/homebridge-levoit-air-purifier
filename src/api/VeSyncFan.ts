@@ -199,17 +199,32 @@ export default class VeSyncFan implements VeSyncGeneric {
         }
 
         const result = data?.result?.result;
+        const firstDefined = <T>(...values: (T | undefined | null)[]): T | undefined =>
+          values.find((value): value is T => value !== undefined && value !== null);
+        const firstBoolean = (...values: unknown[]): boolean | undefined => {
+          const value = firstDefined(...values);
+
+          if (typeof value === 'boolean') {
+            return value;
+          }
+
+          if (typeof value === 'number') {
+            return value !== 0;
+          }
+
+          return undefined;
+        };
 
         this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value || result.PM25 : 0;
         this._airQualityLevel = this.deviceType.hasAirQuality
-          ? result.air_quality || result.AQLevel
+          ? firstDefined(result.air_quality, result.AQLevel) ?? AirQuality.UNKNOWN
           : AirQuality.UNKNOWN;
-        this._filterLife = result.filter_life || result.filterLifePercent;
-        this._screenVisible = result.display || result.screenSwitch;
-        this._childLock = result.child_lock || result.childLockSwitch;
-        this._isOn = result.enabled || result.powerSwitch;
-        this._speed = result.level || result.fanSpeedLevel;
-        this._mode = result.mode || result.workMode;
+        this._filterLife = firstDefined(result.filter_life, result.filterLifePercent) ?? 0;
+        this._screenVisible = firstBoolean(result.display, result.screenSwitch) ?? this._screenVisible;
+        this._childLock = firstBoolean(result.child_lock, result.childLockSwitch) ?? this._childLock;
+        this._isOn = firstBoolean(result.enabled, result.powerSwitch) ?? this._isOn;
+        this._speed = firstDefined(result.level, result.fanSpeedLevel) ?? this._speed;
+        this._mode = firstDefined(result.mode, result.workMode) ?? this._mode;
       } catch (err: any) {
         this.client.log.error(err?.message);
       }

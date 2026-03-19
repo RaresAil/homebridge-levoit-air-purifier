@@ -29,10 +29,6 @@ const characteristic: {
     } else {
       await delay(10);
     }
-
-    this.airPurifierCurrentCharacteristic!.updateValue(
-      boolValue
-    );
   }
 };
 
