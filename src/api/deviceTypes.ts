@@ -11,6 +11,7 @@ export enum DeviceName {
   Core200S = '200S',
   Vital100S  = 'V102S',
   Vital200S = 'V201S',
+  Eleva300X = 'C341S',
 }
 
 export enum HumidifierDeviceName {
@@ -26,6 +27,7 @@ export interface DeviceType {
   speedMinStep: number;
   speedLevels: number; // With night mode
   hasPM25: boolean;
+  hasPM10?: boolean;
 }
 
 export type DeviceCategory = 'Core' | 'Vital';
@@ -77,7 +79,20 @@ const deviceTypes: DeviceType[] = [
     speedLevels: 4,
     hasPM25: true
   },
+  {
+    // Eleva 300X (LAP-C341S-WUSZ / -WEU): Vital-style V2 API, 4 manual levels + sleep
+    isValid: (input: string) => input.includes(DeviceName.Eleva300X),
+    hasAirQuality: true,
+    hasAutoMode: true,
+    speedMinStep: 20,
+    speedLevels: 5,
+    hasPM25: true,
+    hasPM10: true
+  },
 ];
+
+export const usesVitalApi = (model: string) =>
+  model.includes('V') || model.includes(DeviceName.Eleva300X);
 
 export const humidifierDeviceTypes: HumidifierDeviceType[] = [
   {

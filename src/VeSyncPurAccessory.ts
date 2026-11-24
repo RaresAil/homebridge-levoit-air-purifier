@@ -89,6 +89,15 @@ export default class VeSyncPurAccessory {
             .getCharacteristic(this.platform.Characteristic.PM2_5Density)
             .onGet(PM25Density.get.bind(this));
         }
+
+        if (this.device.deviceType.hasPM10) {
+          airQualitySensorService
+            .getCharacteristic(this.platform.Characteristic.PM10Density)
+            .onGet(async () => {
+              await this.device.updateInfo();
+              return this.device.pm10;
+            });
+        }
       }
 
       const legacySensor = this.accessory.getService(

@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType, DeviceCategory } from './deviceTypes';
+import deviceTypes, { DeviceType, DeviceCategory, usesVitalApi } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
 import { VeSyncGeneric } from './VeSyncGeneric';
@@ -27,6 +27,7 @@ export default class VeSyncFan implements VeSyncGeneric {
   private _childLock = false;
   private _filterLife = 0;
   private _pm25 = 0;
+  private _pm10 = 0;
 
   public readonly manufacturer = 'Levoit';
 
@@ -36,6 +37,11 @@ export default class VeSyncFan implements VeSyncGeneric {
     }
 
     return this._airQualityLevel;
+  }
+
+  public get pm10() {
+    const value = this._pm10;
+    return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
   public get screenVisible() {
@@ -86,7 +92,7 @@ export default class VeSyncFan implements VeSyncGeneric {
     public readonly mac: string
   ) {
     this.deviceType = deviceTypes.find(({ isValid }) => isValid(this.model))!;
-    this.deviceCategory = this.model.includes('V') ? 'Vital' : 'Core';
+    this.deviceCategory = usesVitalApi(this.model) ? 'Vital' : 'Core';
   }
 
   public async setChildLock(lock: boolean): Promise<boolean> {
@@ -201,6 +207,7 @@ export default class VeSyncFan implements VeSyncGeneric {
         const result = data?.result?.result;
 
         this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value || result.PM25 : 0;
+        this._pm10 = this.deviceType.hasPM10 ? result.PM10 ?? 0 : 0;
         this._airQualityLevel = this.deviceType.hasAirQuality
           ? result.air_quality || result.AQLevel
           : AirQuality.UNKNOWN;
