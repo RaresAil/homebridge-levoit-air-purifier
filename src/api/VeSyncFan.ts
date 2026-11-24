@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType, DeviceCategory } from './deviceTypes';
+import deviceTypes, { DeviceType, DeviceCategory, DeviceName, usesVitalApi } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
 import { VeSyncGeneric } from './VeSyncGeneric';
@@ -27,6 +27,7 @@ export default class VeSyncFan implements VeSyncGeneric {
   private _childLock = false;
   private _filterLife = 0;
   private _pm25 = 0;
+  private _pm10 = 0; // Only filled for models with hasPM10
 
   public readonly manufacturer = 'Levoit';
 
@@ -71,6 +72,16 @@ export default class VeSyncFan implements VeSyncGeneric {
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
+  // PM10 in µg/m³, clamped to the same 0-1000 range as PM2.5
+  public get pm10() {
+    if (!this.deviceType.hasPM10) {
+      return 0;
+    }
+
+    const value = this._pm10;
+    return value < 0 ? 0 : value > 1000 ? 1000 : value;
+  }
+
   constructor(
     private readonly client: VeSync,
     public readonly name: string,
@@ -86,7 +97,7 @@ export default class VeSyncFan implements VeSyncGeneric {
     public readonly mac: string
   ) {
     this.deviceType = deviceTypes.find(({ isValid }) => isValid(this.model))!;
-    this.deviceCategory = this.model.includes('V') ? 'Vital' : 'Core';
+    this.deviceCategory = usesVitalApi(this.model) ? 'Vital' : 'Core';
   }
 
   public async setChildLock(lock: boolean): Promise<boolean> {
@@ -150,8 +161,10 @@ export default class VeSyncFan implements VeSyncGeneric {
 
     const data = this.deviceCategory === 'Vital' ? {
       manualSpeedLevel: speed,
-      switchIdx: 0,
-      type: 'wind'
+      // The Eleva 300X ignores switchIdx/type and needs levelIdx/levelType (as the VeSync app sends)
+      ...(this.model.includes(DeviceName.Eleva300X)
+        ? { levelIdx: 0, levelType: 'wind' }
+        : { switchIdx: 0, type: 'wind' })
     } : {
       level: speed,
       type: 'wind',
@@ -201,6 +214,7 @@ export default class VeSyncFan implements VeSyncGeneric {
         const result = data?.result?.result;
 
         this._pm25 = this.deviceType.hasPM25 ? result.air_quality_value || result.PM25 : 0;
+        this._pm10 = this.deviceType.hasPM10 ? result.PM10 ?? 0 : 0;
         this._airQualityLevel = this.deviceType.hasAirQuality
           ? result.air_quality || result.AQLevel
           : AirQuality.UNKNOWN;

@@ -7,6 +7,7 @@ import FilterLifeLevel from './characteristics/FilterLifeLevel';
 import RotationSpeed from './characteristics/RotationSpeed';
 import CurrentState from './characteristics/CurrentState';
 import PM25Density from './characteristics/PM25Density';
+import PM10Density from './characteristics/PM10Density';
 import TargetState from './characteristics/TargetState';
 import AirQuality from './characteristics/AirQuality';
 import Active from './characteristics/Active';
@@ -88,6 +89,13 @@ export default class VeSyncPurAccessory {
           airQualitySensorService
             .getCharacteristic(this.platform.Characteristic.PM2_5Density)
             .onGet(PM25Density.get.bind(this));
+        }
+
+        // PM10 on the same Air Quality sensor as PM2.5 (Eleva 300X)
+        if (this.device.deviceType.hasPM10) {
+          airQualitySensorService
+            .getCharacteristic(this.platform.Characteristic.PM10Density)
+            .onGet(PM10Density.get.bind(this));
         }
       }
 

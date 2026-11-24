@@ -29,6 +29,10 @@ export enum HumidifierBypassMethod {
   LEVEL = 'setLevel',
 }
 
+// Purifiers are LAP-* or Core*; humidifiers can contain purifier codes (e.g. LEH-S602S, Classic300S)
+const isPurifierType = (deviceType: string) =>
+  /^(LAP-|Core)/.test(deviceType) && !!deviceTypes.find(({ isValid }) => isValid(deviceType));
+
 const lock = new AsyncLock();
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -38,10 +42,15 @@ export default class VeSync {
   private accountId?: string;
   private token?: string;
 
-  private readonly VERSION = '1.3.1';
-  private readonly AGENT = `VeSync/VeSync 3.0.51(F5321;HomeBridge-VeSync ${this.VERSION})`;
+  // VeSync rejects old app versions (-11012022 "app version is too low"), see issue #119
+  private readonly VERSION = 'VeSync 5.6.60';
+  private readonly AGENT = 'VeSync/5.6.60 (iPhone; iOS 17.2.1; Humidifier/5.00)';
   private readonly TIMEZONE = 'America/New_York';
-  private readonly OS = 'HomeBridge-VeSync';
+  private readonly OS = 'iOS 17.2.1';
+  // Two-step login (authByPWDOrOTM -> loginByAuthorizeCode4Vesync); VeSync only accepts its own appID
+  private readonly AUTH_APP_ID = 'eldodkfj';
+  private readonly AUTH_APP_VERSION = '5.7.16';
+  private readonly AUTH_CLIENT_VERSION = `VeSync ${this.AUTH_APP_VERSION}`;
   private readonly LANG = 'en';
 
   private readonly AXIOS_OPTIONS = {
@@ -216,21 +225,68 @@ export default class VeSync {
           .update(this.password)
           .digest('hex');
 
-        const response = await axios.post(
-          'cloud/v1/user/login',
-          {
-            email: this.email,
-            password: pwdHashed,
-            devToken: '',
-            userType: 1,
-            method: 'login',
-            token: '',
-            ...this.generateDetailBody(),
-            ...this.generateBody()
-          },
-          {
-            ...this.AXIOS_OPTIONS
+        const authOptions = {
+          ...this.AXIOS_OPTIONS,
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'User-Agent': 'okhttp/3.12.1',
+            'accept-language': this.LANG,
+            appVersion: this.AUTH_APP_VERSION,
+            clientVersion: this.AUTH_CLIENT_VERSION
           }
+        };
+        const authCommon = {
+          acceptLanguage: this.LANG,
+          clientInfo: 'SM N9005',
+          clientType: 'vesyncApp',
+          clientVersion: this.AUTH_CLIENT_VERSION,
+          debugMode: false,
+          osInfo: 'Android',
+          // stable per account so VeSync sees one terminal, not a new one every login
+          terminalId: '2' + crypto.createHash('md5').update(`hb-levoit-${this.email}`).digest('hex'),
+          timeZone: this.TIMEZONE,
+          // US VeSync accounts (smartapi.vesync.com)
+          userCountryCode: 'US',
+          traceId: `APP${this.AUTH_APP_ID}${Math.floor(Date.now() / 1000)}`
+        };
+
+        // Step 1: email + MD5 password -> short-lived authorizeCode
+        const step1 = await axios.post(
+          '/globalPlatform/api/accountAuth/v1/authByPWDOrOTM',
+          {
+            ...authCommon,
+            email: this.email,
+            method: 'authByPWDOrOTM',
+            password: pwdHashed,
+            accountID: '',
+            authProtocolType: 'generic',
+            token: '',
+            appID: this.AUTH_APP_ID,
+            sourceAppID: this.AUTH_APP_ID
+          },
+          authOptions
+        );
+
+        const { authorizeCode, bizToken } = step1?.data?.result ?? {};
+        if (step1?.data?.code !== 0 || !authorizeCode) {
+          this.log.error(
+            'Failed to login (step 1)',
+            `Code: ${step1?.data?.code} ${step1?.data?.msg ?? ''}`
+          );
+          return false;
+        }
+
+        // Step 2: authorizeCode -> token + accountID, used for all device calls below
+        const response = await axios.post(
+          '/user/api/accountManage/v1/loginByAuthorizeCode4Vesync',
+          {
+            ...authCommon,
+            method: 'loginByAuthorizeCode4Vesync',
+            authorizeCode,
+            ...(bizToken ? { bizToken } : {}),
+            emailSubscriptions: false
+          },
+          authOptions
         );
 
         if (!response?.data) {
@@ -337,7 +393,7 @@ export default class VeSync {
         let purifiers = list
           .filter(
             ({ deviceType, type, extension }) =>
-              !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+              isPurifierType(deviceType) &&
               type === 'wifi-air' &&
               !!extension?.fanSpeedLevel
           )
@@ -347,7 +403,7 @@ export default class VeSync {
           purifiers = purifiers.concat(list
           .filter(
             ({ deviceType, type, deviceProp }) =>
-              !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+              isPurifierType(deviceType) &&
               type === 'wifi-air' &&
               !!deviceProp
           )
