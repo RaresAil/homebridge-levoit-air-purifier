@@ -29,6 +29,10 @@ export enum HumidifierBypassMethod {
   LEVEL = 'setLevel',
 }
 
+// Humidifier models (LEH-/LUH-) can contain purifier codes, e.g. Superior 6000S LEH-S602S matches Core '602S'
+const isPurifierType = (deviceType: string) =>
+  !/^(LEH|LUH)-/.test(deviceType) && !!deviceTypes.find(({ isValid }) => isValid(deviceType));
+
 const lock = new AsyncLock();
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -386,7 +390,7 @@ export default class VeSync {
         let purifiers = list
           .filter(
             ({ deviceType, type, extension }) =>
-              !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+              isPurifierType(deviceType) &&
               type === 'wifi-air' &&
               !!extension?.fanSpeedLevel
           )
@@ -396,7 +400,7 @@ export default class VeSync {
           purifiers = purifiers.concat(list
           .filter(
             ({ deviceType, type, deviceProp }) =>
-              !!deviceTypes.find(({ isValid }) => isValid(deviceType)) &&
+              isPurifierType(deviceType) &&
               type === 'wifi-air' &&
               !!deviceProp
           )
