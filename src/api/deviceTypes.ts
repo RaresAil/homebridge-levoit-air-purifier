@@ -27,7 +27,7 @@ export interface DeviceType {
   speedMinStep: number;
   speedLevels: number; // With night mode
   hasPM25: boolean;
-  hasPM10?: boolean;
+  hasPM10?: boolean; // Reports PM10 next to PM2.5 (Eleva 300X)
 }
 
 export type DeviceCategory = 'Core' | 'Vital';
@@ -91,6 +91,8 @@ const deviceTypes: DeviceType[] = [
   },
 ];
 
+// Vital models (V102S, V201S) and the Eleva 300X use the newer V2 payloads
+// (powerSwitch, workMode, manualSpeedLevel...) instead of the Core ones
 export const usesVitalApi = (model: string) =>
   model.includes('V') || model.includes(DeviceName.Eleva300X);
 

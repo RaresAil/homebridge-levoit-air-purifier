@@ -27,7 +27,7 @@ export default class VeSyncFan implements VeSyncGeneric {
   private _childLock = false;
   private _filterLife = 0;
   private _pm25 = 0;
-  private _pm10 = 0;
+  private _pm10 = 0; // Only filled for models with hasPM10
 
   public readonly manufacturer = 'Levoit';
 
@@ -37,11 +37,6 @@ export default class VeSyncFan implements VeSyncGeneric {
     }
 
     return this._airQualityLevel;
-  }
-
-  public get pm10() {
-    const value = this._pm10;
-    return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
   public get screenVisible() {
@@ -74,6 +69,16 @@ export default class VeSyncFan implements VeSyncGeneric {
     }
 
     const value = this._pm25;
+    return value < 0 ? 0 : value > 1000 ? 1000 : value;
+  }
+
+  // PM10 in µg/m³, clamped to the same 0-1000 range as PM2.5
+  public get pm10() {
+    if (!this.deviceType.hasPM10) {
+      return 0;
+    }
+
+    const value = this._pm10;
     return value < 0 ? 0 : value > 1000 ? 1000 : value;
   }
 
@@ -155,9 +160,10 @@ export default class VeSyncFan implements VeSyncGeneric {
     }
 
     const data = this.deviceCategory === 'Vital' ? {
+      // levelIdx/levelType match the VeSync app and pyvesync; the Eleva 300X ignores switchIdx/type
       manualSpeedLevel: speed,
-      switchIdx: 0,
-      type: 'wind'
+      levelIdx: 0,
+      levelType: 'wind'
     } : {
       level: speed,
       type: 'wind',

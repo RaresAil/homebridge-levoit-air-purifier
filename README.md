@@ -17,7 +17,10 @@ This is a Homebridge plugin to control Levoit Air Purifiers/Humidifiers with via
 | Core 400S          | ✅     |
 | Core 300S          | ✅     |
 | Core 200S          | ✅     |
+| Eleva 300X         | ✅     |
 | Other versions     | ❌     |
+
+**Login currently works for US VeSync accounts only (VeSync's new two-step login)**
 
 **The versions lower then 200 are not supported (e.g. 131S) because they require API v1 and this plugin uses v2**
 
@@ -30,6 +33,7 @@ Any device from VeSync that is not listed in the supported versions are automati
 
 1. Displaying the air quality (the same display as the one on the physical device) (Not for 200S)
 2. Display the PM2.5 Density value in Home App shown in µg/m^3 (Not for 200S)
+   - Eleva 300X also shows the PM10 Density value
 3. Child Lock option
 4. Speed option:
    - 0 -> Off
@@ -37,7 +41,7 @@ Any device from VeSync that is not listed in the supported versions are automati
    - 2 -> Level 1
    - 3 -> Level 2
    - 4 -> Level 3
-   - 5 -> Level 4 (Only for Core 400S, 400S Pro and 600S)
+   - 5 -> Level 4 (Only for Core 400S, 400S Pro, 600S and Eleva 300X)
 5. Filter Change Indicator & Filter Life Level
 6. Mode change (Not for 200S)
    - Auto

@@ -29,9 +29,9 @@ export enum HumidifierBypassMethod {
   LEVEL = 'setLevel',
 }
 
-// Humidifier models (LEH-/LUH-) can contain purifier codes, e.g. Superior 6000S LEH-S602S matches Core '602S'
+// Purifiers are LAP-* or Core*; humidifiers can contain purifier codes (e.g. LEH-S602S, Classic300S)
 const isPurifierType = (deviceType: string) =>
-  !/^(LEH|LUH)-/.test(deviceType) && !!deviceTypes.find(({ isValid }) => isValid(deviceType));
+  /^(LAP-|Core)/.test(deviceType) && !!deviceTypes.find(({ isValid }) => isValid(deviceType));
 
 const lock = new AsyncLock();
 
@@ -49,7 +49,8 @@ export default class VeSync {
   private readonly OS = 'iOS 17.2.1';
   // Two-step login (authByPWDOrOTM -> loginByAuthorizeCode4Vesync); VeSync only accepts its own appID
   private readonly AUTH_APP_ID = 'eldodkfj';
-  private readonly AUTH_CLIENT_VERSION = 'VeSync 5.7.16';
+  private readonly AUTH_APP_VERSION = '5.7.16';
+  private readonly AUTH_CLIENT_VERSION = `VeSync ${this.AUTH_APP_VERSION}`;
   private readonly LANG = 'en';
 
   private readonly AXIOS_OPTIONS = {
@@ -230,7 +231,7 @@ export default class VeSync {
             'Content-Type': 'application/json; charset=UTF-8',
             'User-Agent': 'okhttp/3.12.1',
             'accept-language': this.LANG,
-            appVersion: '5.7.16',
+            appVersion: this.AUTH_APP_VERSION,
             clientVersion: this.AUTH_CLIENT_VERSION
           }
         };
@@ -244,11 +245,12 @@ export default class VeSync {
           // stable per account so VeSync sees one terminal, not a new one every login
           terminalId: '2' + crypto.createHash('md5').update(`hb-levoit-${this.email}`).digest('hex'),
           timeZone: this.TIMEZONE,
-          // shortcut: US accounts only (smartapi.vesync.com); EU needs the cross-region retry (PR #115)
+          // US accounts only for now (smartapi.vesync.com); EU accounts need the region handling from #115
           userCountryCode: 'US',
           traceId: `APP${this.AUTH_APP_ID}${Math.floor(Date.now() / 1000)}`
         };
 
+        // Step 1: email + MD5 password -> short-lived authorizeCode
         const step1 = await axios.post(
           '/globalPlatform/api/accountAuth/v1/authByPWDOrOTM',
           {
@@ -274,6 +276,7 @@ export default class VeSync {
           return false;
         }
 
+        // Step 2: authorizeCode -> token + accountID, used for all device calls below
         const response = await axios.post(
           '/user/api/accountManage/v1/loginByAuthorizeCode4Vesync',
           {
