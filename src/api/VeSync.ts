@@ -245,7 +245,7 @@ export default class VeSync {
           // stable per account so VeSync sees one terminal, not a new one every login
           terminalId: '2' + crypto.createHash('md5').update(`hb-levoit-${this.email}`).digest('hex'),
           timeZone: this.TIMEZONE,
-          // US accounts only for now (smartapi.vesync.com); EU accounts need the region handling from #115
+          // US VeSync accounts (smartapi.vesync.com)
           userCountryCode: 'US',
           traceId: `APP${this.AUTH_APP_ID}${Math.floor(Date.now() / 1000)}`
         };

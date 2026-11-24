@@ -1,5 +1,5 @@
 import AsyncLock from 'async-lock';
-import deviceTypes, { DeviceType, DeviceCategory, usesVitalApi } from './deviceTypes';
+import deviceTypes, { DeviceType, DeviceCategory, DeviceName, usesVitalApi } from './deviceTypes';
 
 import VeSync, { BypassMethod } from './VeSync';
 import { VeSyncGeneric } from './VeSyncGeneric';
@@ -160,10 +160,11 @@ export default class VeSyncFan implements VeSyncGeneric {
     }
 
     const data = this.deviceCategory === 'Vital' ? {
-      // levelIdx/levelType match the VeSync app and pyvesync; the Eleva 300X ignores switchIdx/type
       manualSpeedLevel: speed,
-      levelIdx: 0,
-      levelType: 'wind'
+      // The Eleva 300X ignores switchIdx/type and needs levelIdx/levelType (as the VeSync app sends)
+      ...(this.model.includes(DeviceName.Eleva300X)
+        ? { levelIdx: 0, levelType: 'wind' }
+        : { switchIdx: 0, type: 'wind' })
     } : {
       level: speed,
       type: 'wind',
